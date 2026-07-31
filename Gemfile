@@ -4,6 +4,7 @@ gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 gem "pg", "~> 1.1"
 
 gem "bootsnap", require: false
+gem "devise"
 gem "image_processing", "~> 1.2"
 gem "importmap-rails"
 gem "jbuilder"
