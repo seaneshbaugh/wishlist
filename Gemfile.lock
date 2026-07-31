@@ -399,7 +399,6 @@ DEPENDENCIES
   tailwindcss-rails
   thruster
   turbo-rails
-  tzinfo-data
   web-console
 
 CHECKSUMS
