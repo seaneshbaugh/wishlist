@@ -1,0 +1,22 @@
+<%= render layout: "devise/shared/card", locals: { title: "Wishlist", subtitle: "Change your password." } do %>
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "space-y-6" }) do |f| %>
+    <%= f.hidden_field :reset_password_token %>
+    <div>
+      <%= f.label :password, "New Password", class: "mb-2 block text-sm font-medium text-gray-700" %>
+      <% if @minimum_password_length %>
+        <p><em>(<%= @minimum_password_length %> characters minimum)</em></p>
+      <% end %>
+      <%= f.password_field :password,
+        autocomplete: "new-password",
+        class: "block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+    <div>
+      <%= f.label :password_confirmation, "Confirm new password", class: "mb-2 block text-sm font-medium text-gray-700" %>
+      <%= f.password_field :password_confirmation,
+        autocomplete: "new-password",
+        class: "block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+    <%= f.submit "Change password",
+      class: "w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+  <% end %>
+<% end %>

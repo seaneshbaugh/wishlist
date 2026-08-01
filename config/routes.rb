@@ -33,5 +33,5 @@ Rails.application.routes.draw do
     get "/unlock-account" => "devise/unlocks#show"
   end
 
-  root to: "devise/sessions#new"
+  root to: "lists#index"
 end
