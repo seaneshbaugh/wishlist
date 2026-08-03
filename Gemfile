@@ -5,6 +5,7 @@ gem "pg", "~> 1.1"
 
 gem "bootsnap", require: false
 gem "devise"
+gem "friendly_id"
 gem "image_processing", "~> 1.2"
 gem "importmap-rails"
 gem "jbuilder"

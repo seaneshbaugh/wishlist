@@ -31,6 +31,10 @@ Rails.application.routes.draw do
     post "/unlock-account" => "devise/unlocks#create", as: :user_unlock
     get "/resend-unlock" => "devise/unlocks#new", as: :new_user_unlock
     get "/unlock-account" => "devise/unlocks#show"
+
+    authenticated do
+      resources :lists
+    end
   end
 
   root to: "lists#index"
