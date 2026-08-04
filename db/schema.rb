@@ -34,7 +34,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
-    t.index ["user_id", "name"], name: "index_lists_on_user_id_and_name", unique: true
+    t.index "user_id, lower((name)::text)", name: "index_lists_on_user_id_and_lower_name", unique: true
     t.index ["user_id", "slug"], name: "index_lists_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_lists_on_user_id"
   end
@@ -56,7 +56,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.integer "sign_in_count", default: 0, null: false
-    t.string "slug", default: "", null: false
     t.string "unconfirmed_email"
     t.string "unlock_token"
     t.datetime "updated_at", null: false
@@ -64,7 +63,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.index ["slug"], name: "index_users_on_slug", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
   end

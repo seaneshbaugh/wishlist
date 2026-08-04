@@ -1,0 +1,21 @@
+en:
+  activerecord:
+    models:
+      list: "List"
+    attributes:
+      list:
+        id: "ID"
+        user: "User"
+        user_id: "User"
+        name: "Name"
+        description: "Description"
+        order: "Order"
+        public: "Public"
+        created_at: "Created At"
+        updated_at: "Updated At"
+    errors:
+      models:
+        list:
+          attributes:
+            name:
+              invalid: "must start with a letter or number and contain only letters, numbers, spaces, and punctuation with no repeated spaces"

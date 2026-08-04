@@ -3,7 +3,14 @@ class User < ApplicationRecord
 
   USERNAME_FORMAT = /\A[a-zA-Z]([a-zA-Z0-9_]){3,31}\z/.freeze
 
-  validates :username, format: { with: USERNAME_FORMAT, allow_blank: true }, presence: true, uniqueness: true
+  scope :alphabetical, -> { order(:username) }
+
+  has_many :lists, dependent: :destroy, inverse_of: :user
+
+  validates :username,
+            format: { with: USERNAME_FORMAT, allow_blank: true },
+            presence: true,
+            uniqueness: true
 
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable, :confirmable, :lockable, :timeoutable, :trackable
 

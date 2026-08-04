@@ -1,0 +1,6 @@
+en:
+  registration_mailer:
+    notification_message:
+      subject: "%{email} has created a Wishlist account."
+    welcome_message:
+      subject: "Welcome to Wishlist!"

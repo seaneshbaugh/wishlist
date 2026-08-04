@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] ||= "test"
+
 require_relative "../config/environment"
 require "rails/test_help"
 
@@ -11,5 +12,17 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+  end
+end
+
+module ActionDispatch
+  class IntegrationTest
+    include Devise::Test::IntegrationHelpers
+
+    def confirm_and_sign_in(resource, scope: nil)
+      resource.confirm unless resource.confirmed?
+
+      sign_in(resource, scope: scope)
+    end
   end
 end

@@ -1,0 +1,7 @@
+<h1><%= t(".title") %></h1>
+<h2 style="border-bottom: 1px solid #333333;"><%= User.human_attribute_name(:username) %></h2>
+<p><%= @new_user.username %>
+<h2 style="border-bottom: 1px solid #333333;"><%= User.human_attribute_name(:email) %></h2>
+<p><%= @new_user.email %>
+<h2 style="border-bottom: 1px solid #333333;"><%= User.human_attribute_name(:created_at) %></h2>
+<p><%= @new_user.created_at.to_formatted_s(:iso8601) %>

@@ -11,7 +11,7 @@ class CreateLists < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :lists, [ :user_id, :name ], unique: true
+    add_index :lists, "user_id, lower(name)", unique: true, name: "index_lists_on_user_id_and_lower_name"
     add_index :lists, [ :user_id, :slug ], unique: true
   end
 end
