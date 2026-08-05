@@ -1,0 +1,11 @@
+en:
+  lists:
+    create:
+      errror: "Error updating list."
+      success: "List was successfully created."
+    update:
+      error: "Error updating list."
+      success: "List was successfully updated."
+    destroy:
+      error: "Error deleting list."
+      success: "List was successfully deleted."

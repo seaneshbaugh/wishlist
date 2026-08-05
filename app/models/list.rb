@@ -5,6 +5,7 @@ class List < ApplicationRecord
 
   scope :alphabetical, -> { order(:name) }
   scope :ordered, -> { order(:order) }
+  scope :publicly_visible, -> { where(public: true) }
 
   belongs_to :user, inverse_of: :lists
 
@@ -20,7 +21,7 @@ class List < ApplicationRecord
 
   before_validation :normalize_name
 
-  friendly_id :name, use: :slugged
+  friendly_id :name, use: [ :scoped, :slugged ], scope: :user
 
   def should_generate_new_friendly_id?
     name_changed? || super

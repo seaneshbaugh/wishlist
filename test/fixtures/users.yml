@@ -2,10 +2,10 @@ sean:
   username: "sean"
   email: "sean@seaneshbaugh.com"
 
-# casie:
-#   username: "casie"
-#   email: "casie@casieeshbaugh.com"
+casie:
+  username: "casie"
+  email: "casie@casieeshbaugh.com"
 
-# amelia:
-#   username: "amelia"
-#   email: "amelia@ameliaeshbaugh.com"
+amelia:
+  username: "amelia"
+  email: "amelia@ameliaeshbaugh.com"

@@ -34,8 +34,14 @@ Rails.application.routes.draw do
 
     authenticated do
       resources :lists
+
+      resources :users, only: %i[index show] do
+        resources :lists, only: %i[index show]
+      end
+
+      root to: "lists#index", as: :authenticated_root
     end
   end
 
-  root to: "lists#index"
+  root to: "devise/sessions#new"
 end

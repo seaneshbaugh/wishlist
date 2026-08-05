@@ -3,6 +3,6 @@ en:
     notification_message:
       title: "New User Registration"
     welcome_message:
-      greeting: "Welcome to Wishlist!"
+      greeting: "Welcome to Wishlist! (%{root_url})"
       greeting_html: "Welcome to <a href=\"%{root_url}\">Wishlist</a>!"
       about: "Wishlist is a website for creating and sharing wishlists and gift ideas."
