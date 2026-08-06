@@ -49,11 +49,11 @@ class ListsController < ApplicationController
     if @list.destroy
       flash[:success] = t(".success")
 
-      redirect_to lists_url
+      redirect_to lists_url, status: :see_other
     else
       flash[:error] = t(".error")
 
-      redirect_to list_url(@list), status: :see_other
+      render "show", status:  :unprocessable_entity
     end
   end
 
