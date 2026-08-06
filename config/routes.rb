@@ -33,6 +33,10 @@ Rails.application.routes.draw do
     get "/unlock-account" => "devise/unlocks#show"
 
     authenticated do
+      resource :account, only: %i[show edit update destroy] do
+        get "confirm-delete" => "accounts#confirm_delete", as: :confirm_delete
+      end
+
       resources :lists
 
       resources :users, only: %i[index show] do
