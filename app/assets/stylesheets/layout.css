@@ -1,0 +1,13 @@
+body {
+    background:
+        radial-gradient(
+            circle at top,
+            rgb(239 244 254 / .55),
+            transparent 45%
+        ),
+        linear-gradient(
+            to bottom,
+            #f8fafc,
+            #f1f5f9
+        );
+}

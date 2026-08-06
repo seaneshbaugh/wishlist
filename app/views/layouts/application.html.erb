@@ -8,24 +8,27 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
-
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
-
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-
-  <body>
-    <main class="container mx-auto flex min-h-screen items-center justify-center px-6 py-12">
-      <%= yield %>
-    </main>
+  <body class="min-h-screen text-slate-900 antialiased">
+    <div class="absolute inset-0 overflow-hidden -z-10">
+      <div class="absolute top-[-250px] left-1/2 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-blue-400/10 blur-3xl"></div>
+    </div>
+    <div class="flex min-h-screen flex-col">
+      <%= render "shared/navbar" %>
+      <main class="mx-auto w-full max-w-7xl flex-1 px-6 py-10">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+      <%= render "shared/footer" %>
+    </div>
   </body>
 </html>

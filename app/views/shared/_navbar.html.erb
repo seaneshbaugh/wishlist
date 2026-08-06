@@ -1,0 +1,65 @@
+<header class="sticky top-0 z-50 backdrop-blur bg-white/80 border-b border-slate-200/70 shadow-sm">
+  <div class="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-6">
+    <div class="justify-self-start">
+      <%= link_to root_path, class: "flex items-center gap-3 text-slate-900 hover:text-blue-600" do %>
+        <svg
+          class="h-8 w-8"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M4 6L10 26L16 12L22 26L28 6"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+        </svg>
+        <span class="text-xl font-semibold tracking-tight">
+          Wishlist
+        </span>
+      <% end %>
+      <button
+        id="mobile-menu-button"
+        class="rounded-md p-2 hover:bg-slate-100 md:hidden">
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+      <nav class="justify-self-center hidden items-center gap-8 text-sm font-medium md:flex">
+        <%= link_to "Home", root_path, class: "text-slate-600 hover:text-slate-900" %>
+        <%= link_to "My Lists", lists_path, class: "text-slate-600 hover:text-slate-900" %>
+        <%= link_to "Users", users_path, class: "text-slate-600 hover:text-slate-900" %>
+        <%= link_to "Help", "#", class: "text-slate-600 hover:text-slate-900" %>
+      </nav>
+      <div class="hidden md:block justify-self-end">
+        <% if user_signed_in? %>
+          <details class="relative">
+            <summary class="cursor-pointer list-none rounded-md px-3 py-2 hover:bg-slate-100">
+              <%= current_user.username %>
+            </summary>
+            <div class="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
+              <%= link_to "Settings", edit_user_registration_path, class: "block px-4 py-2 hover:bg-slate-50" %>
+              <%= button_to "Log out", destroy_user_session_path, method: :delete, form_class: "block", class: "w-full px-4 py-2 text-left hover:bg-slate-50" %>
+            </div>
+          </details>
+        <% end %>
+      </div>
+    <div id="mobile-menu" class="hidden border-t border-slate-200 py-4 md:hidden">
+      <div class="flex flex-col space-y-2">
+        <%= link_to "Home", root_path, class: "rounded px-3 py-2 hover:bg-slate-100" %>
+        <%= link_to "My Lists", lists_path, class: "rounded px-3 py-2 hover:bg-slate-100" %>
+        <%= link_to "Users", users_path, class: "rounded px-3 py-2 hover:bg-slate-100" %>
+        <%= link_to "Help", "#", class: "rounded px-3 py-2 hover:bg-slate-100" %>
+      </div>
+    </div>
+  </div>
+</header>
