@@ -1,0 +1,111 @@
+<%= form_with model: @list, class: "space-y-12" do |f| %>
+  <%#= render "shared/flash" %>
+  <section>
+    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">
+      <%= @list.persisted? ? "Edit List" : "Create List" %>
+    </h1>
+    <p class="mt-2 max-w-2xl text-slate-500">
+      <% if @list.persisted? %>
+        Update the information for this wishlist.
+      <% else %>
+        Give your wishlist a memorable name and decide who can see it.
+      <% end %>
+    </p>
+  </section>
+  <section class="space-y-10">
+    <div data-controller="slug-preview">
+      <%= f.label :name, class: "block text-sm font-semibold text-slate-900" %>
+      <p class="mt-1 text-sm text-slate-500">
+        Required. Shown in the page title and URL.
+      </p>
+      <%= f.text_field :name,
+        id: "list_name",
+        autofocus: true,
+        class: class_names(
+          "mt-3 block w-full rounded-lg border bg-white px-4 py-3 shadow-sm transition",
+          "border-red-300 focus:border-red-500 focus:ring-red-500" => @list.errors[:name].any?,
+          "border-slate-300 focus:border-blue-500 focus:ring-blue-500" => @list.errors[:name].empty?
+        ),
+        data: { slug_preview_target: "name", action: "input->slug-preview#update" } %>
+      <% @list.errors.full_messages_for(:name).each do |message| %>
+        <p class="mt-2 text-sm text-red-600">
+          <%= message %>
+        </p>
+      <% end %>
+      <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+        <p class="text-xs font-medium tracking-wide text-slate-500">
+          URL Preview
+        </p>
+        <p class="mt-1 font-mono text-sm">
+          <span class="text-slate-400">
+            <%= root_url%><%= owner.username %>/</span><span class="text-slate-900" data-slug-preview-target="slug"><%= @list.slug.presence || "your-list-name" %>
+          </span>
+        </p>
+      </div>
+    </div>
+    <div data-controller="character-count" data-character-count-max-value="<%= maximum_length(@list, :description) %>">
+      <%= f.label :description, class: "block text-sm font-semibold text-slate-900" %>
+      <p class="mt-1 text-sm text-slate-500">
+        Optional. Give people a short idea of what belongs in this list.
+      </p>
+      <%= f.text_area :description,
+        rows: 5,
+        maxlength: maximum_length(@list, :description),
+        class: class_names(
+          "mt-3 block w-full rounded-lg border bg-white px-4 py-3 shadow-sm transition",
+          "border-red-300 focus:border-red-500 focus:ring-red-500" => @list.errors[:description].any?,
+          "border-slate-300 focus:border-blue-500 focus:ring-blue-500" => @list.errors[:description].empty?
+        ),
+        data: { character_count_target: "field", action: "input->character-count#update" } %>
+      <div class="text-xs font-medium tracking-wide text-slate-500 mt-1">
+        <span data-character-count-target="counter"><%= @list.description.length %></span> / <%= maximum_length(@list, :description) %>
+      </div>
+      <% @list.errors.full_messages_for(:description).each do |message| %>
+        <p class="mt-2 text-sm text-red-600">
+          <%= message %>
+        </p>
+      <% end %>
+    </div>
+    <fieldset>
+      <legend class="text-sm font-semibold text-slate-900">
+        Visibility
+      </legend>
+      <p class="mt-1 text-sm text-slate-500">
+        Choose who can view this wishlist.
+      </p>
+      <div class="mt-4 space-y-3">
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 hover:border-blue-300">
+          <%= f.radio_button :public, true %>
+          <div>
+            <div class="font-medium text-slate-900">
+              Public
+            </div>
+            <div class="mt-1 text-sm text-slate-500">
+              Any logged in user with the link can view this list.
+            </div>
+          </div>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 hover:border-blue-300">
+          <%= f.radio_button :public, false %>
+          <div>
+            <div class="font-medium text-slate-900">
+              Private
+            </div>
+            <div class="mt-1 text-sm text-slate-500">
+              Only you can see this list.
+            </div>
+          </div>
+        </label>
+      </div>
+    </fieldset>
+  </section>
+  <div class="flex justify-end gap-3 border-t border-slate-200 pt-8">
+    <%= link_to "Cancel",
+      lists_path,
+      class: "rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+    <%= f.submit(
+      @list.persisted? ? "Save Changes" : "Create List",
+      class: "rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+    ) %>
+  </div>
+<% end %>

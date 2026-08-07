@@ -1,1 +1,131 @@
-<h1>Wishlist</h1>
+<div class="mx-auto w-full max-w-5xl">
+  <header class="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight text-slate-900">
+        <% if owner == current_user %>
+          Your Lists
+        <% else %>
+          <%= owner.username%>'s Lists
+        <% end %>
+      </h1>
+      <p class="mt-2 max-w-2xl text-base text-slate-500">
+        <% if owner == current_user %>
+          Manage your wishlists.
+        <% else %>
+          Browse <%= owner.username%>'s wishlists.
+        <% end %>
+      </p>
+      <p class="mt-4 text-sm text-slate-500">
+        <%= pluralize(@lists.count, "list") %>
+        containing
+        <%#= pluralize(@lists.sum(:items_count), "item") %>.
+      </p>
+    </div>
+
+    <%= link_to new_list_path,
+      class: "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" do %>
+      <!--<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>-->
+      New List
+    <% end %>
+
+  </header>
+
+
+  <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm">
+
+    <% @lists.each do |list| %>
+
+      <%= link_to list_path(list),
+        class: "group block border-b border-slate-200/70 last:border-b-0 transition-colors hover:bg-slate-50/60" do %>
+
+        <div class="flex items-center justify-between gap-8 px-8 py-6">
+
+          <div class="min-w-0 flex-1">
+
+            <h2 class="text-lg font-semibold tracking-tight text-slate-900">
+              <%= list.name %>
+            </h2>
+
+            <p class="mt-1 min-h-[3rem] line-clamp-2 text-sm leading-6 text-slate-500">
+              <%= list.description.presence || "&nbsp;".html_safe %>
+            </p>
+
+            <div class="mt-4 flex items-center gap-6 text-sm text-slate-500">
+
+              <span>
+                <%= pluralize(list.items_count, "item") %>
+              </span>
+
+              <% if list.public? %>
+
+                <span class="flex items-center gap-2">
+
+                  <%= heroicon "eye", variant: :outline, options: { class: "h-4 w-4" } %>
+
+                  Public
+
+                </span>
+
+              <% else %>
+
+                <span class="flex items-center gap-2">
+
+                  <%= heroicon "lock-closed", variant: :outline, options: { class: "h-4 w-4" } %>
+
+                  Private
+
+                </span>
+
+              <% end %>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="flex shrink-0 items-center gap-2"
+            onclick="event.preventDefault(); event.stopPropagation();">
+
+            <%= link_to edit_list_path(list),
+              class: "flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-900" do %>
+
+              <%= heroicon "pencil-square", variant: :outline, options: { class: "h-5 w-5" } %>
+
+            <% end %>
+
+
+            <%= button_to list_path(list),
+              method: :delete,
+              form: {
+                data: {
+                  turbo_confirm: "Delete this list?"
+                }
+              },
+              class: "flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600" do %>
+
+              <%= heroicon "trash", variant: :outline, options: { class: "h-5 w-5" } %>
+
+            <% end %>
+
+
+            <div
+              class="flex h-9 w-9 cursor-grab items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+
+              <%= heroicon "squares-2x2", variant: :outline, options: { class: "h-5 w-5 rotate-45" } %>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      <% end %>
+
+    <% end %>
+
+  </div>
+
+</div>
