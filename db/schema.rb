@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_07_210922) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,18 +25,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
     t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
+  create_table "list_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "list_id", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.integer "position", default: 0, null: false
+    t.decimal "price", precision: 10, scale: 2
+    t.integer "priority", default: 2, null: false
+    t.integer "quantity", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.boolean "visible", default: true, null: false
+    t.index ["list_id", "priority", "position"], name: "index_list_items_on_list_id_and_priority_and_position"
+    t.index ["list_id"], name: "index_list_items_on_list_id"
+    t.check_constraint "\"position\" >= 0", name: "list_items_position_non_negative"
+    t.check_constraint "price >= 0::numeric", name: "list_items_price_non_negative"
+    t.check_constraint "priority >= 0 AND priority <= 4", name: "list_items_priority_valid"
+    t.check_constraint "quantity > 0", name: "list_items_quantity_positive"
+  end
+
   create_table "lists", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "description", default: "", null: false
-    t.string "name", default: "", null: false
-    t.integer "order", default: 0, null: false
+    t.text "description", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
     t.boolean "public", default: true, null: false
     t.string "slug", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id"
+    t.bigint "user_id", null: false
     t.index "user_id, lower((name)::text)", name: "index_lists_on_user_id_and_lower_name", unique: true
     t.index ["user_id", "slug"], name: "index_lists_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_lists_on_user_id"
+    t.check_constraint "\"position\" >= 0", name: "lists_position_non_negative"
   end
 
   create_table "users", force: :cascade do |t|
@@ -59,11 +80,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_024617) do
     t.string "unconfirmed_email"
     t.string "unlock_token"
     t.datetime "updated_at", null: false
-    t.string "username", default: "", null: false
+    t.string "username", null: false
+    t.index "lower((username)::text)", name: "index_users_on_lower_username", unique: true
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
-    t.index ["username"], name: "index_users_on_username", unique: true
+    t.check_constraint "username::text ~ '^[A-Za-z][A-Za-z0-9_]{3,31}$'::text", name: "users_username_format"
   end
+
+  add_foreign_key "list_items", "lists"
+  add_foreign_key "lists", "users"
 end

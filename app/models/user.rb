@@ -8,9 +8,9 @@ class User < ApplicationRecord
   has_many :lists, dependent: :destroy, inverse_of: :user
 
   validates :username,
-            format: { with: USERNAME_FORMAT, allow_blank: true },
+            format: { allow_blank: true, with: USERNAME_FORMAT },
             presence: true,
-            uniqueness: true
+            uniqueness: { case_sensitive: false }
 
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable, :confirmable, :lockable, :timeoutable, :trackable
 

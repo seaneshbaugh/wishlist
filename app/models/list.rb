@@ -4,20 +4,22 @@ class List < ApplicationRecord
   NAME_FORMAT = /\A[A-Za-z0-9](?:[A-Za-z0-9[:punct:]]| (?=\S))*\z/.freeze
 
   scope :alphabetical, -> { order(:name) }
-  scope :ordered, -> { order(:order) }
+  scope :ordered, -> { order(:position) }
   scope :publicly_visible, -> { where(public: true) }
 
   belongs_to :user, inverse_of: :lists
 
-  validates :user_id, presence: true
-  validates_associated :user
   validates :name,
             format: { with: NAME_FORMAT, allow_blank: true },
             presence: true,
             length: { minimum: 4, maximum: 255 },
             uniqueness: { scope: :user_id, case_sensitive: false }
-  validates :description, length: { maximum: 1024 }
-  validates :public, inclusion: { in: [ true, false ] }
+  validates :description,
+            length: { maximum: 1024 }
+  validates :position,
+            numericality: { greater_than_or_equal_to: 0, only_integer: true }
+  validates :public,
+            inclusion: { in: [ true, false ] }
 
   before_validation :normalize_name
 
