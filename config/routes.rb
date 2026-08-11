@@ -37,7 +37,11 @@ Rails.application.routes.draw do
         get "confirm-delete" => "accounts#confirm_delete", as: :confirm_delete
       end
 
-      resources :lists
+      resources :lists do
+        collection do
+          patch "reorder" => "lists#reorder", as: :reorder, constraints: ->(request) { request.format.json? }
+        end
+      end
 
       resources :users, only: %i[index show] do
         resources :lists, only: %i[index show]

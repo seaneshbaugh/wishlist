@@ -9,3 +9,6 @@ en:
     destroy:
       error: "Error deleting list."
       success: "List was successfully deleted."
+    reorder:
+      invalid_list_positions: "Invalid list positions. Either too few or too many positions were sent or positions were not sequential starting from 0."
+      error: "Error reordering lists."

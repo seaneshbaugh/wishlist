@@ -58,7 +58,7 @@
         ),
         data: { character_count_target: "field", action: "input->character-count#update" } %>
       <div class="text-xs font-medium tracking-wide text-slate-500 mt-1">
-        <span data-character-count-target="counter"><%= @list.description.length %></span> / <%= maximum_length(@list, :description) %>
+        <span data-character-count-target="counter"><%= @list.description&.length || "0" %></span> / <%= maximum_length(@list, :description) %>
       </div>
       <% @list.errors.full_messages_for(:description).each do |message| %>
         <p class="mt-2 text-sm text-red-600">

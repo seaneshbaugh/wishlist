@@ -8,6 +8,7 @@ class List < ApplicationRecord
   scope :publicly_visible, -> { where(public: true) }
 
   belongs_to :user, inverse_of: :lists
+  has_many :list_items, dependent: :destroy, inverse_of: :list
 
   validates :name,
             format: { with: NAME_FORMAT, allow_blank: true },
@@ -22,6 +23,7 @@ class List < ApplicationRecord
             inclusion: { in: [ true, false ] }
 
   before_validation :normalize_name
+  before_validation :set_initial_position
 
   friendly_id :name, use: [ :scoped, :slugged ], scope: :user
 
@@ -33,5 +35,13 @@ class List < ApplicationRecord
 
   def normalize_name
     name&.squish!
+  end
+
+  def set_initial_position
+    return unless position.nil?
+
+    last_position = user.lists.order(position: :desc).first&.position
+
+    self.position = last_position ? last_position + 1 : 0
   end
 end
