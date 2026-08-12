@@ -68,7 +68,7 @@ class ListsController < ApplicationController
 
     List.transaction do
       positions.each do |position|
-        lists_by_id.fetch(position[:id].to_i).update!(position: "hello") #position[:position])
+        lists_by_id.fetch(position[:id].to_i).update!(position: position[:position])
       end
     end
 

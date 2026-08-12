@@ -104,10 +104,10 @@ export default class extends Controller {
       });
 
       if (!response.ok) {
-        // const bodyJSON = await response.json();
-        // console.log(bodyJSON);
+        const body = await response.json();
 
-        throw new Error(`Reorder failed: ${response.status}`);
+
+        throw new Error(body.error || "Unable to reorder lists.");
       }
     } catch(error) {
       console.error(error);
@@ -117,6 +117,14 @@ export default class extends Controller {
       });
 
       this.originalOrder = null;
+
+      window.dispatchEvent(
+        new CustomEvent("flash:error", {
+          detail: {
+            message: error.message
+          }
+        })
+      );
     } finally {
       this.reorderPending = false;
     }
