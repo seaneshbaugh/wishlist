@@ -1,17 +1,20 @@
 en:
   activerecord:
     models:
-      list: "List"
+      list: "List Item"
     attributes:
       list:
         id: "ID"
-        user: "User"
-        user_id: "User"
+        list: "List"
+        list_id: "List"
         name: "Name"
-        slug: "Slug"
-        descriptpion: "Description"
+        notes: "Notes"
+        url: "URL"
+        price: "Price"
+        quantity: "Quantity"
+        priority: "Priority"
         position: "Position"
-        public: "Public"
+        visibel: "Visible"
         created_at: "Created At"
         updated_at: "Updated At"
     errors:

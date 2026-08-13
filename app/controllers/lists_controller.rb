@@ -5,6 +5,12 @@ class ListsController < ApplicationController
 
   def show
     @list = find_list
+
+    @list_items = @list.list_items.ordered
+
+    @list_items_by_priority = @list_items.group_by(&:priority)
+
+    @list_item = ListItem.new
   end
 
   def new
