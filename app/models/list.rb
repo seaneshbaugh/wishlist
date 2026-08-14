@@ -23,7 +23,7 @@ class List < ApplicationRecord
             inclusion: { in: [ true, false ] }
 
   before_validation :normalize_name
-  before_validation :set_initial_position
+  before_validation :set_initial_position, on: :create
 
   friendly_id :name, use: [ :scoped, :slugged ], scope: :user
 
@@ -40,7 +40,7 @@ class List < ApplicationRecord
   def set_initial_position
     return unless position.nil?
 
-    last_position = user.lists.order(position: :desc).first&.position
+    last_position = user.lists.maximum(:position)
 
     self.position = last_position ? last_position + 1 : 0
   end

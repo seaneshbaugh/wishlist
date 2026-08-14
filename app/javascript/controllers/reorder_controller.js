@@ -106,7 +106,6 @@ export default class extends Controller {
       if (!response.ok) {
         const body = await response.json();
 
-
         throw new Error(body.error || "Unable to reorder lists.");
       }
     } catch(error) {

@@ -5,7 +5,11 @@ class ListItemsController < ApplicationController
     @list_item = @list.list_items.build(list_item_params)
 
     if @list_item.save
-      render partial: "list_items/create", status: :created
+      @list_items = @list.list_items.ordered
+
+      @list_items_by_priority = @list_items.group_by(&:priority)
+
+      render partial: "list_items/list_items", status: :created
     else
       render partial: "list_items/form", status: :unprocessable_entity
     end
@@ -14,7 +18,7 @@ class ListItemsController < ApplicationController
   def update
     @list_item = find_list_item
 
-    if @list_item.update(list_params)
+    if @list_item.update(list_item_params)
       render partial: "list_items/update", status: :ok
     else
       render partial: "list_items/form", status: :unprocessable_entity
@@ -49,11 +53,11 @@ class ListItemsController < ApplicationController
   end
 
   def positions_params
-    params.permition(positions: [ :id, :priority, :position ])
+    params.permit(positions: [ :id, :priority, :position ])
   end
 
   def valid_reorder_positions?(positions)
-    return fasle unless positions.present?
+    return false unless positions.present?
 
     ids = positions.map { |position| position[:id].to_i }
     positions_values = positions.map { |position| position[:position].to_i }

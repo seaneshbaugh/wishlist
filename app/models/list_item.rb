@@ -31,10 +31,19 @@ class ListItem < ApplicationRecord
             inclusion: { in: [ true, false ] }
 
   before_validation :normalize_name
+  before_validation :set_initial_position, on: :create
 
   private
 
   def normalize_name
     name&.squish!
+  end
+
+  def set_initial_position
+    return if !position.nil? || priority.nil?
+
+    last_position = list.list_items.where(priority: priority).maximum(:position)
+
+    self.position = last_position ? last_position + 1 : 0
   end
 end

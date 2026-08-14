@@ -1,127 +1,104 @@
-<%= form_with model: [@list, @list_item], class: "space-y-4" do |form| %>
-  <% if @list_item.errors.any? %>
-    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-      <p class="font-medium">
-        <%= pluralize(list_item.errors.count, "error") %> prevented this item from being saved:
-      </p>
+<div data-controller="list-item-form" data-list-item-form-target="container">
+  <%= form_with model: [@list, @list_item],
+      data: { list_item_form_target: "form", action: "submit->list-item-form#submit" },
+      class: "space-y-4" do |form| %>
+    <% if @list_item.errors.any? %>
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p class="font-medium">
+          <%= pluralize(list_item.errors.count, "error") %> prevented this item from being saved:
+        </p>
 
-      <ul class="mt-1 list-disc pl-5">
-        <% list_item.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
-
-    <%# Name %>
-    <div class="md:col-span-6">
-      <%= form.label :name,
-          class: "block text-sm font-medium text-slate-700" %>
-
-      <%= form.text_field :name,
-          autofocus: true,
-          maxlength: 255,
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-          placeholder: "What do you want?" %>
-    </div>
-
-    <%# Priority %>
-    <div class="md:col-span-2">
-      <%= form.label :priority,
-          class: "block text-sm font-medium text-slate-700" %>
-
-      <%= form.select :priority,
-          ListItem.priorities.keys.map { |priority|
-            [priority.humanize, priority]
-          },
-          {},
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
-    </div>
-
-    <%# Quantity %>
-    <div class="md:col-span-2">
-      <%= form.label :quantity,
-          class: "block text-sm font-medium text-slate-700" %>
-
-      <%= form.number_field :quantity,
-          min: 1,
-          step: 1,
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
-    </div>
-
-    <%# Price %>
-    <div class="md:col-span-2">
-      <%= form.label :price,
-          class: "block text-sm font-medium text-slate-700" %>
-
-      <%= form.number_field :price,
-          min: 0,
-          step: 0.01,
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-          placeholder: "Optional" %>
-    </div>
-
-    <%# Notes %>
-    <div data-controller="character-count" data-character-count-max-value="<%= maximum_length(@list_item, :notes) %>" class="md:col-span-7">
-      <div class="flex items-baseline justify-between">
-        <%= form.label :notes,
+        <ul class="mt-1 list-disc pl-5">
+          <% list_item.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <div class="md:col-span-6">
+        <%= form.label :name,
             class: "block text-sm font-medium text-slate-700" %>
 
-        <span
-          class="text-xs text-slate-400"
-          data-character-count-target="counter">
-          <%= @list_item.notes&.length || "0" %></span> / <%= maximum_length(@list_item, :notes) %>
-        </span>
+        <%= form.text_field :name,
+            autofocus: true,
+            maxlength: 255,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "What do you want?" %>
       </div>
-
-      <%= form.text_field :notes,
-          maxlength: maximum_length(@list_item, :notes),
-          data: { character_count_target: "field", action: "input->character-count#update" },
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-          placeholder: "Optional notes" %>
-    </div>
-
-    <%# Visibility %>
-    <fieldset class="md:col-span-5">
-      <legend class="block text-sm font-medium text-slate-700">
-        Visibility
-      </legend>
-
-      <div class="mt-1 flex h-[38px] items-center gap-5">
-        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
-          <%= form.radio_button :visible,
-              true,
-              class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
-          Visible
-        </label>
-
-        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
-          <%= form.radio_button :visible,
-              false,
-              class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
-          Hidden
-        </label>
+      <div class="md:col-span-2">
+        <%= form.label :priority,
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.select :priority,
+            ListItem.priorities.keys.map { |priority|
+              [priority.humanize, priority]
+            },
+            {},
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
       </div>
-    </fieldset>
+      <div class="md:col-span-2">
+        <%= form.label :quantity,
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :quantity,
+            min: 1,
+            step: 1,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
+      </div>
+      <div class="md:col-span-2">
+        <%= form.label :price,
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :price,
+            min: 0,
+            step: 0.01,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "Optional" %>
+      </div>
+      <div data-controller="character-count" data-character-count-max-value="<%= maximum_length(@list_item, :notes) %>" class="md:col-span-7">
+        <div class="flex items-baseline justify-between">
+          <%= form.label :notes,
+              class: "block text-sm font-medium text-slate-700" %>
+          <span class="text-xs text-slate-400">
+            <span data-character-count-target="counter"><%= @list_item.notes&.length || "0" %></span> / <%= maximum_length(@list_item, :notes) %>
+          </span>
+        </div>
+        <%= form.text_field :notes,
+            maxlength: maximum_length(@list_item, :notes),
+            data: { character_count_target: "field", action: "input->character-count#update" },
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "Optional notes" %>
+      </div>
+      <fieldset class="md:col-span-5">
+        <legend class="block text-sm font-medium text-slate-700">
+          Visibility
+        </legend>
+        <div class="mt-1 flex h-[38px] items-center gap-5">
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+            <%= form.radio_button :visible,
+                true,
+                class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
+            Visible
+          </label>
 
-    <%# URL %>
-    <div class="md:col-span-9">
-      <%= form.label :url,
-          class: "block text-sm font-medium text-slate-700" %>
-
-      <%= form.url_field :url,
-          maxlength: maximum_length(@list_item, :url),
-          class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
-          placeholder: "https://..." %>
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+            <%= form.radio_button :visible,
+                false,
+                class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
+            Hidden
+          </label>
+        </div>
+      </fieldset>
+      <div class="md:col-span-9">
+        <%= form.label :url,
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.url_field :url,
+            maxlength: maximum_length(@list_item, :url),
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "https://..." %>
+      </div>
+      <div class="flex items-end md:col-span-3">
+        <%= form.submit "Add Item",
+            class: "w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
+      </div>
     </div>
-
-    <%# Submit %>
-    <div class="flex items-end md:col-span-3">
-      <%= form.submit "Add Item",
-          class: "w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
-    </div>
-
-  </div>
-<% end %>
+  <% end %>
+</div>
