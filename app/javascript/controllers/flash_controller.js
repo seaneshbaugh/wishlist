@@ -18,21 +18,21 @@ export default class extends Controller {
   }
 
   showInfo(event) {
-    this.showMessage(event.detail.message, "border-indigo-200 bg-indigo-50");
+    this.showMessage(event.detail.message, "border-indigo-200 bg-indigo-50 text-indigo-700");
   }
 
   showSuccess(event) {
-    this.showMessage(event.detail.message, "border-green-200 bg-green-50");
+    this.showMessage(event.detail.message, "border-green-200 bg-green-50 text-green-700");
   }
 
   showError(event) {
-    this.showMessage(event.detail.message, "border-red-200 bg-red-50");
+    this.showMessage(event.detail.message, "border-red-200 bg-red-50 text-red-700");
   }
 
   showMessage(message, classNames) {
     const notification = document.createElement("div");
 
-    notification.className = `rounded-lg border ${classNames} px-4 py-3 text-sm text-red-700 shadow-sm opacity-100 transition-opacity duration-[2500ms]`;
+    notification.className = `rounded-lg border ${classNames} px-4 py-3 text-sm shadow-sm opacity-100 transition-opacity duration-[2500ms]`;
 
     notification.textContent = message;
 
