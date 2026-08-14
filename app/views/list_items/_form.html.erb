@@ -1,8 +1,8 @@
 <div data-controller="list-item-form" data-list-item-form-target="container">
-  <%= form_with model: [@list, @list_item],
+  <%= form_with model: [list, list_item],
       data: { list_item_form_target: "form", action: "submit->list-item-form#submit" },
       class: "space-y-4" do |form| %>
-    <% if @list_item.errors.any? %>
+    <% if list_item.errors.any? %>
       <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <p class="font-medium">
           <%= pluralize(list_item.errors.count, "error") %> prevented this item from being saved:
@@ -53,16 +53,16 @@
             class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
             placeholder: "Optional" %>
       </div>
-      <div data-controller="character-count" data-character-count-max-value="<%= maximum_length(@list_item, :notes) %>" class="md:col-span-7">
+      <div data-controller="character-count" data-character-count-max-value="<%= maximum_length(list_item, :notes) %>" class="md:col-span-7">
         <div class="flex items-baseline justify-between">
           <%= form.label :notes,
               class: "block text-sm font-medium text-slate-700" %>
           <span class="text-xs text-slate-400">
-            <span data-character-count-target="counter"><%= @list_item.notes&.length || "0" %></span> / <%= maximum_length(@list_item, :notes) %>
+            <span data-character-count-target="counter"><%= list_item.notes&.length || "0" %></span> / <%= maximum_length(list_item, :notes) %>
           </span>
         </div>
         <%= form.text_field :notes,
-            maxlength: maximum_length(@list_item, :notes),
+            maxlength: maximum_length(list_item, :notes),
             data: { character_count_target: "field", action: "input->character-count#update" },
             class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
             placeholder: "Optional notes" %>
@@ -91,7 +91,7 @@
         <%= form.label :url,
             class: "block text-sm font-medium text-slate-700" %>
         <%= form.url_field :url,
-            maxlength: maximum_length(@list_item, :url),
+            maxlength: maximum_length(list_item, :url),
             class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
             placeholder: "https://..." %>
       </div>
