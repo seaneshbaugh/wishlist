@@ -32,7 +32,7 @@ export default class extends Controller {
   showMessage(message, classNames) {
     const notification = document.createElement("div");
 
-    notification.className = `rounded-lg border ${classNames} px-4 py-3 text-sm shadow-sm opacity-100 transition-opacity duration-[2500ms]`;
+    notification.className = `rounded-lg border ${classNames} px-4 py-3 mb-3 text-sm shadow-sm opacity-100 transition-opacity duration-[2500ms]`;
 
     notification.textContent = message;
 

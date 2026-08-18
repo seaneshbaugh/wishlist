@@ -1,13 +1,15 @@
-<div data-controller="list-item-form" data-list-item-form-target="container">
+<div data-controller="list-item-form" data-list-item-form-target="container" data-list-item-form-editing-value="<%= list_item.persisted? %>">
   <%= form_with model: [list, list_item],
       data: { list_item_form_target: "form", action: "submit->list-item-form#submit" },
-      class: "space-y-4" do |form| %>
+      class: class_names(
+        "space-y-4",
+        "p-4" => list_item.persisted?
+      ) do |form| %>
     <% if list_item.errors.any? %>
       <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <p class="font-medium">
           <%= pluralize(list_item.errors.count, "error") %> prevented this item from being saved:
         </p>
-
         <ul class="mt-1 list-disc pl-5">
           <% list_item.errors.full_messages.each do |message| %>
             <li><%= message %></li>
@@ -19,7 +21,6 @@
       <div class="md:col-span-6">
         <%= form.label :name,
             class: "block text-sm font-medium text-slate-700" %>
-
         <%= form.text_field :name,
             autofocus: true,
             maxlength: 255,
@@ -96,8 +97,18 @@
             placeholder: "https://..." %>
       </div>
       <div class="flex items-end md:col-span-3">
-        <%= form.submit "Add Item",
-            class: "w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
+        <div class="w-full space-y-2 mt-[25px]">
+          <%= form.submit list_item.persisted? ? "Save Changes" : "Add Item",
+              class: "w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
+          <% if list_item.persisted? %>
+            <button
+              type="button"
+              data-action="click->list-item#cancel"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Cancel
+            </button>
+          <% end %>
+        </div>
       </div>
     </div>
   <% end %>

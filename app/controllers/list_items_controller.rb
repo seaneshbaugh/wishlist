@@ -11,17 +11,23 @@ class ListItemsController < ApplicationController
 
       render partial: "list_items/list_items", status: :created
     else
-      render partial: "list_items/form", status: :unprocessable_entity
+      render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
     end
   end
 
   def update
     @list_item = find_list_item
 
+    @list = @list_item.list
+
     if @list_item.update(list_item_params)
-      render partial: "list_items/update", status: :ok
+      @list_items = @list.list_items.ordered
+
+      @list_items_by_priority = @list_items.group_by(&:priority)
+
+      render partial: "list_items/list_items", status: :ok
     else
-      render partial: "list_items/form", status: :unprocessable_entity
+      render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
     end
   end
 

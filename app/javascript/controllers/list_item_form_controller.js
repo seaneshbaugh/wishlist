@@ -3,6 +3,10 @@ import { Controller } from "@hotwired/stimulus";
 export default class extends Controller {
   static targets = ["container", "form"];
 
+  static values = {
+    editing: Boolean
+  };
+
   connect() {
     this.submitting = false;
   }
@@ -13,8 +17,6 @@ export default class extends Controller {
     if (this.submitting) {
       return;
     }
-
-    console.log(this.formTarget.action);
 
     const csrfToken = document.querySelector("meta[name='csrf-token']").content;
 
@@ -47,11 +49,15 @@ export default class extends Controller {
         })
       );
 
-      this.element.dispatchEvent(
+      const message = this.editingValue
+            ? "Item updated."
+            : "Item added.";
+
+      window.dispatchEvent(
         new CustomEvent("flash:success", {
           bubbles: true,
           detail: {
-            message: "Item added."
+            message
           }
         })
       );

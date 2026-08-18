@@ -11,12 +11,15 @@
       <div>
         <% items.select(&:persisted?).each do |list_item| %>
           <div
+            data-controller="list-item"
             data-list-item-id="<%= list_item.id %>"
             <% if list_item.id == @list_item&.id %>
               data-new-list-item
             <% end %>
-            class="<%= "bg-blue-50 transition-colors duration-500" if list_item.id == @list_item&.id %> group border-b border-slate-200/60 last:border-b-0">
-            <div class="flex items-center gap-4 px-6 py-1">
+            class="<%= "bg-blue-50 transition-colors duration-500 " if list_item.id == @list_item&.id %>group border-b border-slate-200/60 last:border-b-0">
+            <div
+              data-list-item-target="display"
+              class="flex items-center gap-4 px-6 py-1">
               <% if @list.user == current_user %>
                 <div
                   data-reorder-handle
@@ -83,6 +86,11 @@
                   <% end %>
                 </div>
               <% end %>
+            </div>
+            <div
+              data-list-item-target="form"
+              class="hidden">
+              <%= render "list_items/form", list: @list, list_item: list_item %>
             </div>
           </div>
         <% end %>
