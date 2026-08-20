@@ -34,14 +34,41 @@ class ListItemsController < ApplicationController
   def destroy
     @list_item = find_list_item
 
+    @list = @list_item.list
+
     if @list_item.destroy
-      render partial: "list_items/destroy", status: :ok
+      @list_items = @list.list_items.ordered
+
+      @list_items_by_priority = @list_items.group_by(&:priority)
+
+      render partial: "list_items/list_items", status: :ok
     else
-      render partial: "list_items/error", status: :unprocessable_entity
+      flash[:error] = t(".error")
+
+      render partial: "list_items/list_items", status: :unprocessable_entity
     end
   end
 
   def reorder
+    positions = positions_params[:positions]
+
+    list = find_list
+
+    unless valid_reorder_positions?(list, positions)
+      return render json: { error: t(".invalid_list_item_positions") }, status: :unprocessable_entity
+    end
+
+    list_items_by_id = list.list_items.where(id: positions.map { |position| position[:id] }).index_by(&:id)
+
+    ListItem.transaction do
+      positions.each do |position|
+        list_items_by_id.fetch(position[:id].to_i).update!(priority: position[:priority], position: position[:position])
+      end
+    end
+
+    head :no_content
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: t(".error"), details: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
   private
@@ -62,14 +89,15 @@ class ListItemsController < ApplicationController
     params.permit(positions: [ :id, :priority, :position ])
   end
 
-  def valid_reorder_positions?(positions)
+  def valid_reorder_positions?(list, positions)
     return false unless positions.present?
 
     ids = positions.map { |position| position[:id].to_i }
-    positions_values = positions.map { |position| position[:position].to_i }
+    positions_by_priority = positions.group_by { |position| position[:priority] }.transform_values { |positions| positions.map { |position| position[:position].to_i } }
 
     ids.uniq.length == ids.length &&
-      ids.sort == current_user.lists.id.sort &&
-      positions_values.sort == (0...ids.length).to_a
+      ids.sort == list.list_items.ids.sort &&
+      positions_by_priority.keys.all? { |priority| ListItem.priorities.key?(priority) } &&
+      positions_by_priority.values.all? { |positions| positions.sort == (0...positions.length).to_a }
   end
 end

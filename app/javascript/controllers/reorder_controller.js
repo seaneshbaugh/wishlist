@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["item"];
+  static targets = ["item", "items", "section"];
 
   static values = {
     url: String
@@ -37,7 +37,11 @@ export default class extends Controller {
     }
 
     this.draggedItem = item;
-    this.originalOrder = [...this.itemTargets];
+    this.originalOrder = this.itemTargets.map(item => ({
+      item,
+      parent: item.parentElement,
+      nextSibling: item.nextSibling
+    }));
 
     item.classList.add("opacity-50", "rotate-1");
 
@@ -46,26 +50,33 @@ export default class extends Controller {
   }
 
   dragover(event) {
-    event.preventDefault();
-
-    const item = event.target.closest("[data-reorder-target='item']");
-
-    if (!item || item === this.draggedItem) {
+    if (!this.draggedItem || this.reorderPending) {
       return;
     }
 
-    event.dataTransfer.dropEffect = "move";
-
-    const rect = item.getBoundingClientRect();
-    const midpoint = rect.top + rect.height / 2;
-
-    if (event.clientY < midpoint) {
-      item.before(this.insertionIndicator);
-    } else {
-      item.after(this.insertionIndicator);
+    if (event.target === this.insertionIndicator || this.insertionIndicator.contains(event.target)) {
+      return;
     }
 
-    this.insertionIndicator.hidden = false;
+    const item = event.target.closest("[data-reorder-target='item']");
+    const section = event.target.closest("[data-reorder-target='section']");
+
+    if (!item && !section) {
+      return;
+    }
+
+    if (item === this.draggedItem) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    if (item) {
+      this.positionIndicatorForItem(item, event);
+    } else {
+      this.positionIndicatorForSection(section, event);
+    }
   }
 
   dragenter(event) {
@@ -83,10 +94,25 @@ export default class extends Controller {
 
     this.insertionIndicator.before(this.draggedItem);
 
-    const positions = this.itemTargets.map((item, index) => ({
-      id: item.dataset.id,
-      position: index
-    }));
+    let positions = [];
+
+    if (this.sectionTargets.length === 0) {
+      positions = this.itemTargets.map((item, position) => ({
+        id: item.dataset.id,
+        position
+      }));
+    } else {
+      positions = this.sectionTargets.flatMap(section => {
+        const priority = section.dataset.priority;
+
+        return [...section.querySelectorAll("[data-reorder-target='item']")]
+          .map((item, position) => ({
+            id: item.dataset.id,
+            priority,
+            position
+          }));
+      });
+    }
 
     const csrfToken = document.querySelector("meta[name='csrf-token']").content;
 
@@ -111,8 +137,8 @@ export default class extends Controller {
     } catch(error) {
       console.error(error);
 
-      this.originalOrder.forEach(item => {
-        this.element.appendChild(item);
+      this.originalOrder.forEach(({ item, parent, nextSibling }) => {
+        parent.insertBefore(item, nextSibling);
       });
 
       this.originalOrder = null;
@@ -137,5 +163,39 @@ export default class extends Controller {
     this.insertionIndicator.hidden = true;
 
     this.draggedItem = null;
+  }
+
+  positionIndicatorForItem(item, event) {
+    const rect = item.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+
+    if (event.clientY < midpoint) {
+      item.before(this.insertionIndicator);
+    } else {
+      item.after(this.insertionIndicator);
+    }
+
+    this.insertionIndicator.hidden = false;
+  }
+
+  positionIndicatorForSection(section, event) {
+    const items = [...section.querySelectorAll("[data-reorder-target='item']")].filter(item => item !== this.draggedItem);
+
+    for (const item of items) {
+      const rect = item.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+
+      if (event.clientY < midpoint) {
+        item.before(this.insertionIndicator);
+        this.insertionIndicator.hidden = false;
+
+        return;
+      }
+    }
+
+    const itemsContainer = section.querySelector("[data-reorder-target='items']");
+
+    itemsContainer.appendChild(this.insertionIndicator);
+    this.insertionIndicator.hidden = false;
   }
 }

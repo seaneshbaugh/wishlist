@@ -1,5 +1,5 @@
 en:
-  lists:
+  list_items:
     create:
       errror: "Error updating list item."
       success: "List item was successfully created."
@@ -10,5 +10,5 @@ en:
       error: "Error deleting list item."
       success: "List item was successfully deleted."
     reorder:
-      invalid_list_positions: "Invalid list item positions. Either too few or too many positions were sent or positions were not sequential starting from 0."
+      invalid_list_item_positions: "Invalid list item positions. Either too few or too many positions were sent or positions were not sequential starting from 0."
       error: "Error reordering lists items."
