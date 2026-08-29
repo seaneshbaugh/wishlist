@@ -1,9 +1,9 @@
 en:
   activerecord:
     models:
-      list: "List Item"
+      list_item: "List Item"
     attributes:
-      list:
+      list_item:
         id: "ID"
         list: "List"
         list_id: "List"
@@ -14,12 +14,6 @@ en:
         quantity: "Quantity"
         priority: "Priority"
         position: "Position"
-        visibel: "Visible"
+        visible: "Visible"
         created_at: "Created At"
         updated_at: "Updated At"
-    errors:
-      models:
-        list:
-          attributes:
-            name:
-              invalid: "must start with a letter or number and contain only letters, numbers, spaces, and punctuation with no repeated spaces"
