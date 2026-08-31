@@ -9,9 +9,40 @@ class ListItem < ApplicationRecord
 
   scope :ordered, -> { order(:priority, :position) }
   scope :visible, -> { where(visible: true) }
+  scope :visible_to, ->(user) {
+    joins(:list)
+    .where(
+      <<~SQL.squish,
+        "lists"."user_id" = :user_id
+        OR (
+          "list_items"."visible" = TRUE
+          AND (
+            EXISTS (
+              SELECT 1
+              FROM "purchases"
+              WHERE "purchases"."list_item_id" = "list_items"."id"
+              AND "purchases"."user_id" = :user_id
+            )
+            OR (
+              COALESCE(
+                (
+                  SELECT SUM("purchases"."quantity")
+                  FROM "purchases"
+                  WHERE "purchases"."list_item_id" = "list_items"."id"
+                ),
+                0
+              ) < "list_items"."quantity"
+            )
+          )
+        )
+      SQL
+      user_id: user.id
+    )
+  }
 
   belongs_to :list, inverse_of: :list_items
   has_one :user, through: :list
+  has_many :purchases, dependent: :destroy, inverse_of: :list_item
 
   validates :name,
             length: { maximum: 255 },
@@ -32,6 +63,18 @@ class ListItem < ApplicationRecord
 
   before_validation :normalize_name
   before_validation :set_initial_position, on: :create
+
+  def purchase_for(user)
+    purchases.find { |purchase| purchase.user_id == user.id }
+  end
+
+  def purchased?
+    purchases.any?(&:revealed?)
+  end
+
+  def revealed_purchase_quantity
+    purchases.select(&:revealed?).sum(&:quantity)
+  end
 
   private
 

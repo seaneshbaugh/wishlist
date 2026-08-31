@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_07_210922) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_180430) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,6 +60,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_210922) do
     t.check_constraint "\"position\" >= 0", name: "lists_position_non_negative"
   end
 
+  create_table "purchases", force: :cascade do |t|
+    t.boolean "anonymous", default: false, null: false
+    t.datetime "created_at", null: false
+    t.bigint "list_item_id", null: false
+    t.text "notes"
+    t.decimal "price", precision: 10, scale: 2
+    t.string "purchased_from"
+    t.integer "quantity", default: 1, null: false
+    t.datetime "reveal_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["list_item_id", "reveal_at"], name: "index_purchases_on_list_item_id_and_reveal_at"
+    t.index ["list_item_id"], name: "index_purchases_on_list_item_id"
+    t.index ["user_id"], name: "index_purchases_on_user_id"
+    t.check_constraint "price IS NULL OR price >= 0::numeric", name: "purchases_price_null_or_non_negative"
+    t.check_constraint "quantity > 0", name: "purchases_quantity_positive"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
@@ -91,4 +109,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_07_210922) do
 
   add_foreign_key "list_items", "lists"
   add_foreign_key "lists", "users"
+  add_foreign_key "purchases", "list_items"
+  add_foreign_key "purchases", "users"
 end

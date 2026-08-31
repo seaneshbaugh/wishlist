@@ -50,7 +50,9 @@ Rails.application.routes.draw do
       end
 
       resources :users, only: %i[index show] do
-        resources :lists, only: %i[index show]
+        resources :lists, only: %i[index show] do
+          resources :purchases, only: %i[create update destroy]
+        end
       end
 
       root to: "lists#index", as: :authenticated_root

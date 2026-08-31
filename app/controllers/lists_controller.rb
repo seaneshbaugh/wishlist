@@ -6,7 +6,7 @@ class ListsController < ApplicationController
   def show
     @list = find_list
 
-    @list_items = @list.list_items.ordered
+    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
 
     @list_items_by_priority = @list_items.group_by(&:priority)
 

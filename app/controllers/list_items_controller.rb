@@ -5,7 +5,7 @@ class ListItemsController < ApplicationController
     @list_item = @list.list_items.build(list_item_params)
 
     if @list_item.save
-      @list_items = @list.list_items.ordered
+      @list_items = @list.list_items.ordered.includes(:purchases)
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 
@@ -21,7 +21,7 @@ class ListItemsController < ApplicationController
     @list = @list_item.list
 
     if @list_item.update(list_item_params)
-      @list_items = @list.list_items.ordered
+      @list_items = @list.list_items.ordered.includes(:purchases)
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 
@@ -37,7 +37,7 @@ class ListItemsController < ApplicationController
     @list = @list_item.list
 
     if @list_item.destroy
-      @list_items = @list.list_items.ordered
+      @list_items = @list.list_items.ordered.includes(:purchases)
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 

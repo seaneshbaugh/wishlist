@@ -1,0 +1,137 @@
+<div data-controller="purchase-form">
+  <div class="border-b border-slate-200/70 bg-slate-50/70 px-4 py-3">
+    <div class="flex items-baseline justify-between gap-4">
+      <h3 class="font-medium text-slate-900">
+        <%= list_item.name %>
+      </h3>
+      <% if list_item.price.present? %>
+        <span class="shrink-0 text-sm text-slate-500">
+          <%= number_to_currency(list_item.price) %>
+        </span>
+      <% end %>
+    </div>
+    <% if list_item.notes.present? %>
+      <p class="mt-1 text-sm text-slate-500">
+        <%= list_item.notes %>
+      </p>
+    <% end %>
+  </div>
+  <%= form_with model: [owner, list, purchase],
+      data: {
+        purchase_form_target: "form",
+        action: "submit->purchase-form#submit"
+      },
+      class: "space-y-4 p-4" do |form| %>
+    <%= form.hidden_field :list_item_id %>
+    <% if purchase.errors.any? %>
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p class="font-medium">
+          <%= pluralize(purchase.errors.count, "error") %> prevented this purchase from being saved:
+        </p>
+
+        <ul class="mt-1 list-disc pl-5">
+          <% purchase.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <div class="md:col-span-4">
+        <%= form.label :quantity,
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :quantity,
+            min: 1,
+            max: list_item.quantity,
+            step: 1,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
+        <p class="mt-1 text-xs text-slate-400">
+          Up to <%= list_item.quantity %>
+        </p>
+      </div>
+      <div class="md:col-span-4">
+        <%= form.label :price,
+            "Purchase Price",
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :price,
+            min: 0,
+            step: 0.01,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "Optional" %>
+      </div>
+      <div class="md:col-span-4">
+        <%= form.label :purchased_from,
+            "Purchased From",
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :purchased_from,
+            maxlength: maximum_length(purchase, :purchased_from),
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "Optional" %>
+      </div>
+      <div class="md:col-span-6">
+        <%= form.label :reveal_at,
+            "Reveal Date & Time",
+            class: "block text-sm font-medium text-slate-700" %>
+        <%= form.datetime_local_field :reveal_at,
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
+        <p class="mt-1 text-xs text-slate-400">
+          The list owner won't see this purchase until then.
+        </p>
+      </div>
+      <div class="md:col-span-6">
+        <fieldset>
+          <legend class="block text-sm font-medium text-slate-700">
+            Show Who Purchased It
+          </legend>
+          <div class="mt-1 flex h-[38px] items-center gap-5">
+            <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+              <%= form.radio_button :anonymous,
+                  false,
+                  class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
+              Show my name
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+              <%= form.radio_button :anonymous,
+                  true,
+                  class: "h-4 w-4 border-slate-300 text-blue-600 focus:ring-blue-500" %>
+              Remain anonymous
+            </label>
+          </div>
+        </fieldset>
+      </div>
+      <div
+        data-controller="character-count"
+        data-character-count-max-value="<%= maximum_length(purchase, :notes) %>"
+        class="md:col-span-12">
+        <div class="flex items-baseline justify-between">
+          <%= form.label :notes,
+              class: "block text-sm font-medium text-slate-700" %>
+          <span class="text-xs text-slate-400">
+            <span data-character-count-target="counter"><%= purchase.notes&.length || "0" %></span>
+            / <%= maximum_length(purchase, :notes) %>
+          </span>
+        </div>
+        <%= form.text_field :notes,
+            maxlength: maximum_length(purchase, :notes),
+            data: {
+              character_count_target: "field",
+              action: "input->character-count#update"
+            },
+            class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+            placeholder: "Optional notes" %>
+      </div>
+      <div class="flex items-end md:col-span-12">
+        <div class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            data-action="click->list-item#cancelPurchase"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Cancel
+          </button>
+          <%= form.submit purchase.persisted? ? "Save Purchase" : "Mark as Purchased",
+              class: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,25 @@
+en:
+  activerecord:
+    models:
+      purchase: "Purchase"
+    attributes:
+      purchase:
+        id: "ID"
+        list_item: "List Item"
+        list_item_id: "List Item"
+        user: "User"
+        user_id: "User"
+        purchased_from: "Purchased From"
+        notes: "Notes"
+        price: "Purchase Price"
+        quantity: "Quantity"
+        reveal_at: "Reveal At"
+        anonymous: "Anonymous"
+        created_at: "Created At"
+        updated_at: "Updated At"
+    errors:
+      models:
+        purchase:
+          attributes:
+            quantity:
+              exceeds_remaining_quanitiy: "exceeds the remaining quanity"

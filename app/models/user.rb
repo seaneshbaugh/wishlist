@@ -6,6 +6,7 @@ class User < ApplicationRecord
   scope :alphabetical, -> { order(:username) }
 
   has_many :lists, dependent: :destroy, inverse_of: :user
+  has_many :purchases, dependent: :destroy, inverse_of: :user
 
   validates :username,
             format: { allow_blank: true, with: USERNAME_FORMAT },
