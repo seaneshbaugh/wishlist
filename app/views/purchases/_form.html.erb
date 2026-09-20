@@ -17,10 +17,7 @@
     <% end %>
   </div>
   <%= form_with model: [owner, list, purchase],
-      data: {
-        purchase_form_target: "form",
-        action: "submit->purchase-form#submit"
-      },
+
       class: "space-y-4 p-4" do |form| %>
     <%= form.hidden_field :list_item_id %>
     <% if purchase.errors.any? %>
@@ -28,7 +25,6 @@
         <p class="font-medium">
           <%= pluralize(purchase.errors.count, "error") %> prevented this purchase from being saved:
         </p>
-
         <ul class="mt-1 list-disc pl-5">
           <% purchase.errors.full_messages.each do |message| %>
             <li><%= message %></li>

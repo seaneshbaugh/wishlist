@@ -9,7 +9,14 @@ class ListItemsController < ApplicationController
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 
-      render partial: "list_items/list_items", status: :created
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/update", locals: { message: t(".success") }, status: :created
+        end
+        format.html do
+          render partial: "list_items/list_items", status: :created
+        end
+      end
     else
       render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
     end
@@ -25,7 +32,14 @@ class ListItemsController < ApplicationController
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 
-      render partial: "list_items/list_items", status: :ok
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/update", locals: { message: t(".success") }, status: :ok
+        end
+        format.html do
+          render partial: "list_items/list_items", status: :ok
+        end
+      end
     else
       render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
     end
@@ -41,7 +55,14 @@ class ListItemsController < ApplicationController
 
       @list_items_by_priority = @list_items.group_by(&:priority)
 
-      render partial: "list_items/list_items", status: :ok
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/update", locals: { message: t(".success") }, status: :ok
+        end
+        format.html do
+          render partial: "list_items/list_items", status: :ok
+        end
+      end
     else
       flash[:error] = t(".error")
 

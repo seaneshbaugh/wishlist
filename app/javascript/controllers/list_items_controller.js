@@ -1,12 +1,12 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["container"];
+  connect() {
+    this.highlightNewItem();
+  }
 
-  refresh(event) {
-    this.containerTarget.innerHTML = event.detail.html;
-
-    const newItem = this.containerTarget.querySelector("[data-new-list-item]");
+  highlightNewItem() {
+    const newItem = this.element.querySelector("[data-new-list-item]");
 
     if (!newItem) {
       return;

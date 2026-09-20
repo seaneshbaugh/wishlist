@@ -1,14 +1,14 @@
 en:
   list_items:
     create:
-      errror: "Error updating list item."
-      success: "List item was successfully created."
+      errror: "Error adding item to list."
+      success: "Item added to list."
     update:
-      error: "Error updating list item."
-      success: "List item was successfully updated."
+      error: "Error updating item."
+      success: "Item updated."
     destroy:
-      error: "Error deleting list item."
-      success: "List item was successfully deleted."
+      error: "Error deleting item."
+      success: "Item deleted."
     reorder:
       invalid_list_item_positions: "Invalid list item positions. Either too few or too many positions were sent or positions were not sequential starting from 0."
       error: "Error reordering lists items."

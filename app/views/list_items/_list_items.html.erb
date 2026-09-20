@@ -1,8 +1,9 @@
 <div
-  data-controller="reorder"
+  id="list-items"
+  class="mt-8 overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm"
+  data-controller="list-items reorder"
   data-reorder-url-value="<%= reorder_list_list_items_path(@list) %>"
-  data-action="dragstart->reorder#dragstart dragover->reorder#dragover dragenter->reorder#dragenter dragleave->reorder#dragleave drop->reorder#drop dragend->reorder#dragend"
-  class="mt-8 overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm">
+  data-action="dragstart->reorder#dragstart dragover->reorder#dragover dragenter->reorder#dragenter dragleave->reorder#dragleave drop->reorder#drop dragend->reorder#dragend">
   <% ListItem.priorities.keys.each do |priority| %>
     <% items = @list_items_by_priority[priority] %>
     <% next if items.blank? %>

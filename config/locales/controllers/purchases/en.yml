@@ -1,0 +1,11 @@
+en:
+  purchases:
+    create:
+      errror: "Error marking item as purchased."
+      success: "Item marked as purchased."
+    update:
+      error: "Error updating purchase."
+      success: "Purchase updated."
+    destroy:
+      error: "Error deleting purchase."
+      success: "Purchase deleted."

@@ -55,18 +55,14 @@
       <% end %>
     </div>
   </header>
-  <div
-    data-controller="list-items"
-    data-action="list-item:created->list-items#refresh">
+  <div>
     <% if @list.user == current_user %>
       <%= render "list_items/form", list: @list, list_item: @list.list_items.build %>
     <% end %>
-    <div data-list-items-target="container">
-      <%= render "list_items/list_items" %>
-    </div>
+    <%= render "list_items/list_items" %>
     <% if @list.user == current_user %>
       <div class="mt-8">
-       <%= render "list_items/form", list: @list, list_item: @list.list_items.build %>
+        <%= render "list_items/form", list: @list, list_item: @list.list_items.build %>
       </div>
     <% end %>
   </div>

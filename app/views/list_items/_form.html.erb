@@ -1,6 +1,6 @@
-<div data-controller="list-item-form" data-list-item-form-target="container" data-list-item-form-editing-value="<%= list_item.persisted? %>">
+<div>
   <%= form_with model: [list, list_item],
-      data: { list_item_form_target: "form", action: "submit->list-item-form#submit" },
+      data: { controller: "reset-form" },
       class: class_names(
         "space-y-4",
         "p-4" => list_item.persisted?
