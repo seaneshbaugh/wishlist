@@ -86,7 +86,7 @@ class PurchasesController < ApplicationController
 
         respond_to do |format|
           format.turbo_stream do
-            return render_list_items_turbo_stream(message: t(".success"))
+            return render_list_items_turbo_stream(message: t(".error"), status: :unprocessable_entity)
           end
           format.html do
             return render partial: "list_items/list_items", status: :unprocessable_entity
