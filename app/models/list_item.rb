@@ -68,7 +68,7 @@ class ListItem < ApplicationRecord
     purchases.find { |purchase| purchase.user_id == user.id }
   end
 
-  def purchased?
+  def revealed_purchase?
     purchases.any?(&:revealed?)
   end
 
