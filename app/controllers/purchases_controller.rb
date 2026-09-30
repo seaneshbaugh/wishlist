@@ -48,7 +48,7 @@ class PurchasesController < ApplicationController
       @list_item.lock!
 
       unless @purchase.update(purchase_params)
-        repond_to do |format|
+        respond_to do |format|
           format.turbo_stream do
             return render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
           end
