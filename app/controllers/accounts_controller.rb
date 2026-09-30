@@ -37,7 +37,7 @@ class AccountsController < ApplicationController
     if params[:confirmation] != @account.username
       flash.now[:error] = t(".error_confirmation")
 
-      render "edit", status: :unprocessable_entity
+      return render "edit", status: :unprocessable_entity
     end
 
     if @account.destroy
