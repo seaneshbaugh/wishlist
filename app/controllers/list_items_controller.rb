@@ -34,10 +34,10 @@ class ListItemsController < ApplicationController
 
       respond_to do |format|
         format.turbo_stream do
-          render "list_items/update", locals: { message: t(".success") }, status: :ok
+          render "list_items/update", locals: { message: t(".success") }
         end
         format.html do
-          render partial: "list_items/list_items", status: :ok
+          render partial: "list_items/list_items"
         end
       end
     else
@@ -57,10 +57,10 @@ class ListItemsController < ApplicationController
 
       respond_to do |format|
         format.turbo_stream do
-          render "list_items/update", locals: { message: t(".success") }, status: :ok
+          render "list_items/update", locals: { message: t(".success") }
         end
         format.html do
-          render partial: "list_items/list_items", status: :ok
+          render partial: "list_items/list_items"
         end
       end
     else
