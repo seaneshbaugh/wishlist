@@ -25,12 +25,14 @@ class PurchasesController < ApplicationController
       end
     end
 
+    load_list_items
+
     respond_to do |format|
       format.turbo_stream do
-        render_list_items_turbo_stream(message: t(".success"), status: :created)
+        render "purchases/update", locals: { message: t(".success") }, status: :created
       end
       format.html do
-        render_list_items_html(status: :created)
+        render partial: "list_items/list_items", status: :created
       end
     end
   end
@@ -59,12 +61,14 @@ class PurchasesController < ApplicationController
       end
     end
 
+    load_list_items
+
     respond_to do |format|
       format.turbo_stream do
-        render_list_items_turbo_stream(message: t(".success"))
+        render "purchases/update", locals: { message: t(".success") }
       end
       format.html do
-        render_list_items_html
+        render partial: "list_items/list_items"
       end
     end
   end
@@ -82,11 +86,9 @@ class PurchasesController < ApplicationController
       @list_item.lock!
 
       unless @purchase.destroy
-        flash[:error] = t(".error")
-
         respond_to do |format|
           format.turbo_stream do
-            return render_list_items_turbo_stream(message: t(".error"), status: :unprocessable_entity)
+            return render "purchases/error", locals: { message: t(".error") }, status: :unprocessable_entity
           end
           format.html do
             return render partial: "list_items/list_items", status: :unprocessable_entity
@@ -95,12 +97,14 @@ class PurchasesController < ApplicationController
       end
     end
 
+    load_list_items
+
     respond_to do |format|
       format.turbo_stream do
-        render_list_items_turbo_stream(message: t(".success"))
+        render "purchases/update", locals: { message: t(".success") }
       end
       format.html do
-        render_list_items_html
+        render partial: "list_items/list_items"
       end
     end
   end
@@ -144,25 +148,17 @@ class PurchasesController < ApplicationController
     find_list_item.purchases.find(params[:id])
   end
 
+  def load_list_items
+    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
+
+    @list_items_by_priority = @list_items.group_by(&:priority)
+  end
+
   def list_item_id_param
     params.require(:purchase).permit(:list_item_id)[:list_item_id]
   end
 
   def purchase_params
     params.require(:purchase).permit(:purchased_from, :notes, :price, :quantity, :reveal_at, :anonymous)
-  end
-
-  def render_list_items_turbo_stream(message:, status: :ok)
-    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
-    @list_items_by_priority = @list_items.group_by(&:priority)
-
-    render "purchases/update", locals: { message: }, status:
-  end
-
-  def render_list_items_html(status: :ok)
-    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
-    @list_items_by_priority = @list_items.group_by(&:priority)
-
-    render partial: "list_items/list_items", status:
   end
 end
