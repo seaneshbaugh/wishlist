@@ -10,11 +10,11 @@ class ListsController < ApplicationController
 
     @list_items_by_priority = @list_items.group_by(&:priority)
 
-    @list_item = ListItem.new
+    @list_item = @list.list_items.build
   end
 
   def new
-    @list = List.new
+    @list = current_user.lists.build
   end
 
   def create
