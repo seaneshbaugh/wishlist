@@ -31,7 +31,7 @@
           </p>
         <% end %>
         <p class="mt-4 text-sm text-slate-400">
-          <%= pluralize(@list.list_items.visible_to(current_user).size, "item") %>
+          <%= pluralize(@list_items.size, "item") %>
           · Updated <%= time_ago_in_words(@list.updated_at) %> ago
         </p>
       </div>
