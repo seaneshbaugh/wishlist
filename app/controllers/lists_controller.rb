@@ -6,9 +6,7 @@ class ListsController < ApplicationController
   def show
     @list = find_list
 
-    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
-
-    @list_items_by_priority = @list_items.group_by(&:priority)
+    load_list_items
 
     @list_item = @list.list_items.build
   end
@@ -106,6 +104,12 @@ class ListsController < ApplicationController
 
   def find_list
     visible_lists.friendly.find(params[:id])
+  end
+
+  def load_list_items
+    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
+
+    @list_items_by_priority = @list_items.group_by(&:priority)
   end
 
   def list_params
