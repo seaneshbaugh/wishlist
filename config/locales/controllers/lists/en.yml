@@ -1,7 +1,7 @@
 en:
   lists:
     create:
-      errror: "Error updating list."
+      error: "Error updating list."
       success: "List was successfully created."
     update:
       error: "Error updating list."

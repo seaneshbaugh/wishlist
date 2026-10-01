@@ -135,7 +135,7 @@
               <div
                 data-list-item-target="editForm"
                 class="hidden">
-                <%= render "list_items/form", list: @list, list_item: list_item %>
+                <%= render "list_items/form", list: @list, list_item: list_item, form_id: dom_id(list_item, :edit_form) %>
               </div>
             <% else %>
               <% purchase = list_item.purchase_for(current_user) %>

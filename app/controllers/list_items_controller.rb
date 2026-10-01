@@ -18,7 +18,7 @@ class ListItemsController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render "list_items/form_error", locals: { message: t(".error") }, status: :unprocessable_entity
+          render "list_items/form_error", locals: { list: @list, list_item: @list_item, form_id: form_id_param, message: t(".error") }, status: :unprocessable_entity
         end
         format.html do
           load_list_items
@@ -50,7 +50,7 @@ class ListItemsController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render "list_items/form_error", locals: { message: t(".error") }, status: :unprocessable_entity
+          render "list_items/form_error", locals: { list: @list, list_item: @list_item, form_id: dom_id(@list_item, :edit_form),  message: t(".error") }, status: :unprocessable_entity
         end
         format.html do
           load_list_items
@@ -139,6 +139,10 @@ class ListItemsController < ApplicationController
 
   def positions_params
     params.permit(positions: [ :id, :priority, :position ])
+  end
+
+  def form_id_param
+    params[:form_id]
   end
 
   def valid_reorder_positions?(list, positions)

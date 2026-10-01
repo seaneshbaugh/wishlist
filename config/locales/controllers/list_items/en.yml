@@ -1,7 +1,7 @@
 en:
   list_items:
     create:
-      errror: "Error adding item to list."
+      error: "Error adding item to list."
       success: "Item added to list."
     update:
       error: "Error updating item."

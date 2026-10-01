@@ -1,10 +1,13 @@
-<div>
+<div id="<%= form_id %>">
   <%= form_with model: [list, list_item],
       data: { controller: "reset-form" },
       class: class_names(
         "space-y-4",
         "p-4" => list_item.persisted?
       ) do |form| %>
+    <% unless list_item.persisted? %>
+      <%= hidden_field_tag :form_id, form_id %>
+    <% end %>
     <% if list_item.errors.any? %>
       <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <p class="font-medium">
