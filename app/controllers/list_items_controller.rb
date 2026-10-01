@@ -1,4 +1,9 @@
 class ListItemsController < ApplicationController
+  NEW_LIST_ITEM_FORM_IDS = %w[
+    new-list-item-form-top
+    new-list-item-form-bottom
+  ].freeze
+
   def create
     @list = find_list
 
@@ -142,7 +147,9 @@ class ListItemsController < ApplicationController
   end
 
   def form_id_param
-    params[:form_id]
+    params.require(:form_id).tap do |form_id|
+      raise ActionController::BadRequest unless NEW_LIST_ITEM_FORM_IDS.include?(form_id)
+    end
   end
 
   def valid_reorder_positions?(list, positions)
