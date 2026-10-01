@@ -10,29 +10,35 @@ class PurchasesController < ApplicationController
 
     authorize_purchase_create!
 
-    ListItem.transaction do
+    created = ListItem.transaction do
       @list_item.lock!
 
-      unless @purchase.save
-        respond_to do |format|
-          format.turbo_stream do
-            return render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
-          end
-          format.html do
-            return render partial: "purchases/form", locals: { list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
-          end
-        end
-      end
+      @purchase.save
     end
 
-    load_list_items
+    if created
+      load_list_items
 
-    respond_to do |format|
-      format.turbo_stream do
-        render "purchases/update", locals: { message: t(".success") }, status: :created
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/update", locals: { message: t(".success") }, status: :created
+        end
+        format.html do
+          redirect_to user_list_url(@list.user, @list), status: :see_other
+        end
       end
-      format.html do
-        render partial: "list_items/list_items", status: :created
+    else
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
+
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
       end
     end
   end
@@ -46,29 +52,35 @@ class PurchasesController < ApplicationController
 
     authorize_purchase_update!
 
-    ListItem.transaction do
+    updated = ListItem.transaction do
       @list_item.lock!
 
-      unless @purchase.update(purchase_params)
-        respond_to do |format|
-          format.turbo_stream do
-            return render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
-          end
-          format.html do
-            return render partial: "list_items/form", locals: { list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
-          end
-        end
-      end
+      @purchase.update(purchase_params)
     end
 
-    load_list_items
+    if updated
+      load_list_items
 
-    respond_to do |format|
-      format.turbo_stream do
-        render "purchases/update", locals: { message: t(".success") }
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/update", locals: { message: t(".success") }
+        end
+        format.html do
+          redirect_to user_list_url(@list.user, @list), status: :see_other
+        end
       end
-      format.html do
-        render partial: "list_items/list_items"
+    else
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
+
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
       end
     end
   end
@@ -82,29 +94,35 @@ class PurchasesController < ApplicationController
 
     authorize_purchase_destroy!
 
-    ListItem.transaction do
+    destroyed = ListItem.transaction do
       @list_item.lock!
 
-      unless @purchase.destroy
-        respond_to do |format|
-          format.turbo_stream do
-            return render "purchases/error", locals: { message: t(".error") }, status: :unprocessable_entity
-          end
-          format.html do
-            return render partial: "list_items/list_items", status: :unprocessable_entity
-          end
-        end
-      end
+      @purchase.destroy
     end
 
-    load_list_items
+    if destroyed
+      load_list_items
 
-    respond_to do |format|
-      format.turbo_stream do
-        render "purchases/update", locals: { message: t(".success") }
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/update", locals: { message: t(".success") }
+        end
+        format.html do
+          redirect_to user_list_url(@list.user, @list), status: :see_other
+        end
       end
-      format.html do
-        render partial: "list_items/list_items"
+    else
+      respond_to do |format|
+        format.turbo_stream do
+          render "purchases/error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
+
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
       end
     end
   end
@@ -120,20 +138,12 @@ class PurchasesController < ApplicationController
     raise ActiveRecord::RecordNotFound if @list.user == current_user
   end
 
-  def authorize_purchase_destroy!
-    purchaser_can_destroy = @purchase.user == current_user && !@purchase.revealed?
-
-    owner_can_destroy = @list.user == current_user && @purchase.revealed?
-
-    unless purchaser_can_destroy || owner_can_destroy
-      raise ActiveRecord::RecordNotFound
-    end
+  def authorize_purchase_update!
+    raise ActiveRecord::RecordNotFound unless @purchase.editable_by?(current_user)
   end
 
-  def authorize_purchase_update!
-    unless @purchase.user == current_user && !@purchase.revealed?
-      raise ActiveRecord::RecordNotFound
-    end
+  def authorize_purchase_destroy!
+    raise ActiveRecord::RecordNotFound unless @purchase.deletable_by?(current_user)
   end
 
   def find_list

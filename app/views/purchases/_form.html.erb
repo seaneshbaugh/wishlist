@@ -17,7 +17,6 @@
     <% end %>
   </div>
   <%= form_with model: [owner, list, purchase],
-
       class: "space-y-4 p-4" do |form| %>
     <%= form.hidden_field :list_item_id %>
     <% if purchase.errors.any? %>

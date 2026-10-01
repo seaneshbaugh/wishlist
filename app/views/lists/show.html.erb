@@ -57,12 +57,12 @@
   </header>
   <div>
     <% if @list.user == current_user %>
-      <%= render "list_items/form", list: @list, list_item: @list.list_items.build %>
+      <%= render "list_items/form", list: @list, list_item: @list_item %>
     <% end %>
     <%= render "list_items/list_items" %>
     <% if @list.user == current_user %>
       <div class="mt-8">
-        <%= render "list_items/form", list: @list, list_item: @list.list_items.build %>
+        <%= render "list_items/form", list: @list, list_item: @list_item %>
       </div>
     <% end %>
   </div>

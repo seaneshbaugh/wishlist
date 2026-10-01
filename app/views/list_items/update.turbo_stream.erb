@@ -3,5 +3,5 @@
 <% end %>
 
 <%= turbo_stream.append "flash" do %>
-  <% render "shared/notification", color_classes: "border-green-200 bg-green-50 text-green-700", message: %>
+  <%= render "shared/notification", color_classes: "border-green-200 bg-green-50 text-green-700", message: %>
 <% end %>

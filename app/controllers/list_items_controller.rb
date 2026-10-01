@@ -12,11 +12,22 @@ class ListItemsController < ApplicationController
           render "list_items/update", locals: { message: t(".success") }, status: :created
         end
         format.html do
-          render partial: "list_items/list_items", status: :created
+          redirect_to list_url(@list), status: :see_other
         end
       end
     else
-      render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/form_error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
+
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
+      end
     end
   end
 
@@ -33,11 +44,22 @@ class ListItemsController < ApplicationController
           render "list_items/update", locals: { message: t(".success") }
         end
         format.html do
-          render partial: "list_items/list_items"
+          redirect_to list_url(@list), status: :see_other
         end
       end
     else
-      render partial: "list_items/form", locals: { list: @list, list_item: @list_item }, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/form_error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
+
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
+      end
     end
   end
 
@@ -54,13 +76,22 @@ class ListItemsController < ApplicationController
           render "list_items/update", locals: { message: t(".success") }
         end
         format.html do
-          render partial: "list_items/list_items"
+          redirect_to list_url(@list), status: :see_other
         end
       end
     else
-      flash[:error] = t(".error")
+      respond_to do |format|
+        format.turbo_stream do
+          render "list_items/destroy_error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+        format.html do
+          load_list_items
 
-      render partial: "list_items/list_items", status: :unprocessable_entity
+          flash.now[:error] = t(".error")
+
+          render "lists/show", status: :unprocessable_entity
+        end
+      end
     end
   end
 
