@@ -6,6 +6,7 @@ class Purchase < ApplicationRecord
 
   belongs_to :list_item, inverse_of: :purchases
   belongs_to :user, inverse_of: :purchases
+  has_one :list, through: :list_item
 
   validates :purchased_from,
             length: { maximum: 512 }

@@ -9,6 +9,7 @@ class List < ApplicationRecord
 
   belongs_to :user, inverse_of: :lists
   has_many :list_items, dependent: :destroy, inverse_of: :list
+  has_many :purchases, through: :list_items
 
   validates :name,
             format: { with: NAME_FORMAT, allow_blank: true },

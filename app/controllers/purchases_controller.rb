@@ -86,7 +86,7 @@ class PurchasesController < ApplicationController
   end
 
   def destroy
-    @purchase = current_user.purchases.find(params[:id])
+    @purchase = find_purchase
 
     @list_item = @purchase.list_item
 
@@ -155,7 +155,7 @@ class PurchasesController < ApplicationController
   end
 
   def find_purchase
-    find_list_item.purchases.find(params[:id])
+    find_list.purchases.find(params[:id])
   end
 
   def load_list_items
