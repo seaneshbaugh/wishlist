@@ -1,7 +1,7 @@
 en:
   purchases:
     create:
-      errror: "Error marking item as purchased."
+      error: "Error marking item as purchased."
       success: "Item marked as purchased."
     update:
       error: "Error updating purchase."

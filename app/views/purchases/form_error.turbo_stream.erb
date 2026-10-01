@@ -1,3 +1,7 @@
+<%= turbo_stream.replace dom_id(list_item, :purchase_form) do %>
+  <%= render "purchases/form", list: list, list_item: list_item, purchase: purchase %>
+<% end %>
+
 <%= turbo_stream.append "flash" do %>
   <%= render "shared/notification", color_classes: "border-red-200 bg-red-50 text-red-700", message: %>
 <% end %>

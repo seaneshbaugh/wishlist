@@ -30,7 +30,7 @@ class PurchasesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
+          render "purchases/form_error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
         end
         format.html do
           load_list_items
@@ -72,7 +72,7 @@ class PurchasesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render "purchases/error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
+          render "purchases/form_error", locals: { message: t(".error"), list: @list, list_item: @list_item, purchase: @purchase }, status: :unprocessable_entity
         end
         format.html do
           load_list_items
@@ -114,7 +114,7 @@ class PurchasesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render "purchases/error", locals: { message: t(".error") }, status: :unprocessable_entity
+          render "purchases/destroy_error", locals: { message: t(".error") }, status: :unprocessable_entity
         end
         format.html do
           load_list_items
