@@ -101,7 +101,7 @@
                     </svg>
                   <% end %>
                 <% else %>
-                  <% purchase = list_item.purchase_for(current_user) %>
+                  <% purchase = list_item.unrevealed_purchase_for(current_user) %>
                   <% if !purchase || purchase.editable_by?(current_user) %>
                     <button
                       type="button"
@@ -138,7 +138,7 @@
                 <%= render "list_items/form", list: @list, list_item: list_item, form_id: dom_id(list_item, :edit_form) %>
               </div>
             <% else %>
-              <% purchase = list_item.purchase_for(current_user) %>
+              <% purchase = list_item.unrevealed_purchase_for(current_user) %>
               <div
                 data-list-item-target="purchaseForm"
                 class="hidden">

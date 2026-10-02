@@ -64,8 +64,12 @@ class ListItem < ApplicationRecord
   before_validation :normalize_name
   before_validation :set_initial_position, on: :create
 
-  def purchase_for(user)
-    purchases.find { |purchase| purchase.user_id == user.id }
+  def purchases_for(user)
+    purchases.select { |purchase| purchase.user_id == user.id }
+  end
+
+  def unrevealed_purchase_for_user(user)
+    purcahse.find { |purchase| !purchase.revealed? && purchase.user_id == user.id }
   end
 
   def revealed_purchase?

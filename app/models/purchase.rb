@@ -23,6 +23,7 @@ class Purchase < ApplicationRecord
             inclusion: { in: [ true, false ] }
 
   validate :quantity_does_not_exceed_remaining_quantity
+  validate :only_one_unrevealed_purchase_per_user
 
   def revealed?
     reveal_at <= Time.current
@@ -46,5 +47,17 @@ class Purchase < ApplicationRecord
     if purchased_quantity + quantity > list_item.quantity
       errors.add(:quantity, :exceeds_remaining_quantity)
     end
+  end
+
+  def only_one_unrevealed_purchase_per_user
+    return unless user && list_item && !revealed?
+
+    existing = list_item.purchases
+                 .where(user_id: user_id)
+                 .where("reveal_at > ?", Time.current)
+                 .where.not(id: id)
+                 .exists?
+
+    errors.add(:base, :more_than_one_remaining_purchase) if existing
   end
 end
