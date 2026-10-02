@@ -10,6 +10,8 @@ class PurchasesController < ApplicationController
 
     authorize_purchase_create!
 
+    # Lock the list item so two purchases can't both validate
+    # against the same remaining quantity at the same time.
     created = ListItem.transaction do
       @list_item.lock!
 
@@ -52,6 +54,7 @@ class PurchasesController < ApplicationController
 
     authorize_purchase_update!
 
+    # See comment in #create.
     updated = ListItem.transaction do
       @list_item.lock!
 
