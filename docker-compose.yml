@@ -11,6 +11,11 @@ services:
     image: axllent/mailpit
     ports:
       - "8025:8025"
+  selenium:
+    image: selenium/standalone-firefox:latest
+    shm_size: 2gb
+    profiles:
+      - system-test
   web:
     build: .
     env_file:

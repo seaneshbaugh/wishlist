@@ -1,11 +1,14 @@
 sean:
   username: "sean"
   email: "sean@seaneshbaugh.com"
+  encrypted_password: <%= Devise::Encryptor.digest(User, "test123456") %>
 
 casie:
   username: "casie"
   email: "casie@casieeshbaugh.com"
+  encrypted_password: <%= Devise::Encryptor.digest(User, "test123456") %>
 
 amelia:
   username: "amelia"
   email: "amelia@ameliaeshbaugh.com"
+  encrypted_password: <%= Devise::Encryptor.digest(User, "test123456") %>
