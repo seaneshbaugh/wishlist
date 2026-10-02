@@ -146,8 +146,16 @@ class PurchasesController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @purchase.deletable_by?(current_user)
   end
 
+  def visible_lists
+    if owner == current_user
+      owner.lists
+    else
+      owner.lists.publicly_visible
+    end
+  end
+
   def find_list
-    owner.lists.publicly_visible.friendly.find(params[:list_id])
+    visible_lists.friendly.find(params[:list_id])
   end
 
   def find_list_item
