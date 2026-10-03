@@ -29,9 +29,13 @@ Ensure Selenium container is started:
 
     $ docker-compose --profile system-test up -d selenium
 
-Run the tests:
+Run the tests (excluding system tests):
 
     $ docker compose exec web bundle exec rails test
+
+Run the tests (including sytem tests):
+
+    $ docker compose exec web bundle exec rails test:all
 
 To watch the Selenium logs:
 
