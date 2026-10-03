@@ -15,14 +15,22 @@ module ActiveSupport
   end
 end
 
+module AuthenticationTestHelper
+  def confirm_and_sign_in(resource, scope: nil)
+    resource.confirm unless resource.confirmed?
+
+    sign_in(resource, scope: scope)
+  end
+end
+
 module ActionDispatch
   class IntegrationTest
     include Devise::Test::IntegrationHelpers
+    include AuthenticationTestHelper
+  end
 
-    def confirm_and_sign_in(resource, scope: nil)
-      resource.confirm unless resource.confirmed?
-
-      sign_in(resource, scope: scope)
-    end
+  class SystemTestCase
+    include Devise::Test::IntegrationHelpers
+    include AuthenticationTestHelper
   end
 end
