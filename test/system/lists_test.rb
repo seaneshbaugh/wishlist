@@ -36,4 +36,18 @@ class ListsTest < ApplicationSystemTestCase
     assert_text "Name can't be blank"
     assert_text "Name is too short"
   end
+
+  test "user edits a list" do
+    list = lists(:christmas_list)
+
+    visit edit_list_path(list)
+
+    fill_in "Description", with: "Ho Ho Ho"
+
+    click_button "Save Changes"
+
+    assert_current_path edit_list_path(list)
+
+    assert_text "Ho Ho Ho"
+  end
 end
