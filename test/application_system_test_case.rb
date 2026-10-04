@@ -4,6 +4,7 @@ Capybara.server = :puma, { Silent: true }
 Capybara.server_host = "0.0.0.0"
 Capybara.server_port = 3001
 Capybara.app_host = "http://web:3001"
+Capybara.enable_aria_label = true
 
 Capybara.register_driver :remote_firefox do |app|
   options = Selenium::WebDriver::Firefox::Options.new

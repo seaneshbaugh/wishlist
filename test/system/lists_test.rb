@@ -50,4 +50,18 @@ class ListsTest < ApplicationSystemTestCase
 
     assert_text "Ho Ho Ho"
   end
+
+  test "user deletes a list" do
+    list = lists(:christmas_list)
+
+    visit lists_path
+
+    accept_confirm "Delete this list?" do
+      click_button "Delete #{list.name}"
+    end
+
+    assert_no_text list.name
+
+    assert_not List.exists?(list.id)
+  end
 end
