@@ -51,6 +51,22 @@ class ListsTest < ApplicationSystemTestCase
     assert_text "Ho Ho Ho"
   end
 
+  test "user sees validation errors when editing an invalid list" do
+    list = lists(:christmas_list)
+
+    visit edit_list_path(list)
+
+    fill_in "Name", with: ""
+
+    click_button "Save Changes"
+
+    assert_current_path edit_list_path(list)
+
+    assert_text "Error updating list."
+    assert_text "Name can't be blank"
+    assert_text "Name is too short"
+  end
+
   test "user deletes a list" do
     list = lists(:christmas_list)
 
