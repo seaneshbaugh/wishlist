@@ -10,7 +10,7 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find_by!(email: "newuser@test.com")
 
-    assert_performed_with(job: RegistrationNotificationJob, args: [user])
+    assert_performed_with(job: RegistrationNotificationJob, args: [ user ])
   end
 
   test "invalid registration does not enqueue reigstration notification" do
