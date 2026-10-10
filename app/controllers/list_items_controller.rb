@@ -1,4 +1,6 @@
 class ListItemsController < ApplicationController
+  include ActionView::RecordIdentifier
+
   NEW_LIST_ITEM_FORM_IDS = %w[
     new-list-item-form-top
     new-list-item-form-bottom

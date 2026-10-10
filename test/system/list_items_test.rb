@@ -12,6 +12,7 @@ class ListItemsTest < ApplicationSystemTestCase
 
     within "#new-list-item-form-top" do
       fill_in "Name", with: "Football"
+
       click_button "Add Item"
     end
 
@@ -25,11 +26,97 @@ class ListItemsTest < ApplicationSystemTestCase
 
     within "#new-list-item-form-bottom" do
       fill_in "Name", with: "Football"
+
       click_button "Add Item"
     end
 
     within "#list-items" do
       assert_text "Football"
     end
+  end
+
+  test "user sees validation errors when creating an invalid list item" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-top" do
+      fill_in "Name", with: ""
+
+      click_button "Add Item"
+    end
+
+    assert_text "prevented this item from being saved"
+    assert_text "Name can't be blank"
+  end
+
+  test "user edits a list item" do
+    list_item = list_items(:football)
+
+    visit list_path(@list)
+
+    within "[data-id='#{list_item.id}']" do
+      click_button "Edit"
+
+      fill_in "Notes", with: "A nice pigskin"
+
+      click_button "Save Changes"
+
+      assert_text "A nice pigskin"
+    end
+  end
+
+  test "user sees validation errors when editing an invalid list item" do
+    list_item = list_items(:football)
+
+    visit list_path(@list)
+
+    within "[data-id='#{list_item.id}']" do
+      click_button "Edit"
+
+      fill_in "Name", with: ""
+
+      click_button "Save Changes"
+
+      assert_text "prevented this item from being saved"
+      assert_text "Name can't be blank"
+    end
+  end
+
+  test "user deletes a list item" do
+    list_item = list_items(:football)
+
+    visit list_path(@list)
+
+    within "[data-id='#{list_item.id}']" do
+      accept_confirm "Delete this item?" do
+        click_button "Delete #{list_item.name}"
+      end
+    end
+
+    assert_no_text list_item.name
+
+    assert_not ListItem.exists?(list_item.id)
+  end
+
+  test "user reorders list items" do
+    first = list_items(:football)
+    second = list_items(:lucky_cat)
+
+    first.update!(priority: 0, position: 0)
+    second.update!(priority: 0, position: 1)
+
+    visit list_path(@list)
+
+    first_row = find("[data-id='#{first.id}']")
+    second_row = find("[data-id='#{second.id}']")
+
+    first_row.find("[data-reorder-handle]").drag_to(second_row)
+
+    assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
+
+    first.reload
+    second.reload
+
+    assert_equal 1, first.position
+    assert_equal 0, second.position
   end
 end

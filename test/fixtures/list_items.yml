@@ -1,11 +1,24 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
-# This model initially had no columns defined. If you add columns to the
-# model remove the "{}" from the fixture names and add the columns immediately
-# below each fixture, per the syntax in the comments below
-#
-#one: {}
-# column: value
-#
-#two: {}
-# column: value
+football:
+  list: christmas_list
+  name: "Football"
+  notes: "NFL size"
+  price: "49.99"
+  quantity: 1
+  priority: 0
+  position: 0
+lucky_cat:
+  list: christmas_list
+  name: "Lucky Cat"
+  notes: "Gold"
+  price: "19.99"
+  quantity: 1
+  priority: 1
+  position: 0
+paint_brush:
+  list: christmas_list
+  name: "Paint Brush"
+  notes: "Size 1"
+  price: "38.00"
+  quantity: 3
+  priority: 2
+  position: 0
