@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 gem "rails", "~> 8.1.3", ">= 8.1.3.1"
-gem "pg", "~> 1.1"
+gem "pg", "~> 1.7"
 
 gem "bootsnap", require: false
 gem "devise"
