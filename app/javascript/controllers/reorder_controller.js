@@ -114,18 +114,23 @@ export default class extends Controller {
       });
     }
 
-    const csrfToken = document.querySelector("meta[name='csrf-token']").content;
+    const headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    };
+
+    const csrfToken = document.querySelector("meta[name='csrf-token']")?.content;
+
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
 
     this.reorderPending = true;
 
     try {
       const response = await fetch(this.urlValue, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": csrfToken
-        },
+        headers,
         body: JSON.stringify({ positions })
       });
 

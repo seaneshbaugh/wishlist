@@ -5,3 +5,10 @@ christmas_list:
   description: "All I want for Christmas..."
   position: 0
   public: true
+birthday_list:
+  user: sean
+  name: "Birthday List"
+  slug: "birthday-list"
+  description: "Happy birthday to me..."
+  position: 1
+  public: true

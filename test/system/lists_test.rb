@@ -80,4 +80,27 @@ class ListsTest < ApplicationSystemTestCase
 
     assert_not List.exists?(list.id)
   end
+
+  test "user reorders lists" do
+    first = lists(:christmas_list)
+    second = lists(:birthday_list)
+
+    first.update!(position: 0)
+    second.update!(position: 1)
+
+    visit lists_path
+
+    first_row = find("[data-id='#{first.id}']")
+    second_row = find("[data-id='#{second.id}']")
+
+    first_row.find("[data-reorder-handle]").drag_to(second_row)
+
+    assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
+
+    first.reload
+    second.reload
+
+    assert_equal 1, first.position
+    assert_equal 0, second.position
+  end
 end

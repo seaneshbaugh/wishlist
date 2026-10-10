@@ -15,4 +15,37 @@ end
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :remote_firefox, screen_size: [ 1400, 1400 ]
+
+  def assert_eventually(timeout: Capybara.default_max_wait_time)
+    Timeout.timeout(timeout) do
+      loop do
+        return if yield
+
+        sleep 0.05
+      end
+    end
+  rescue Timeout::Error
+    flunk "condition was not met within #{timeout} seconds"
+  end
+
+  def capture_logs!
+    page.execute_script(<<~JS)
+      window.jsLogs = [];
+      ["log", "error", "warn", "info"].forEach((level) => {
+        const original = console[level];
+        console[level] = function(...args) {
+          window.jsLogs.push({ level, message: args.join(" ") });
+          original.apply(console, args);
+        };
+      });
+    JS
+  end
+
+  def clear_captured_logs!
+    page.evaluate_script("window.jsLogs = []")
+  end
+
+  def captured_logs
+    page.evaluate_script("window.jsLogs || []")
+  end
 end
