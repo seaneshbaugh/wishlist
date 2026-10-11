@@ -89,17 +89,30 @@ class ListItemsTest < ApplicationSystemTestCase
     end
   end
 
-  test "user sees validation errors when creating an invalid list item" do
+  test "user sees validation errors when creating an invalid list item in the top form" do
     visit list_path(@list)
 
     within "#new-list-item-form-top" do
       fill_in "Name", with: ""
 
       click_button "Add Item"
-    end
 
-    assert_text "prevented this item from being saved"
-    assert_text "Name can't be blank"
+      assert_text "prevented this item from being saved"
+      assert_text "Name can't be blank"
+    end
+  end
+
+  test "user sees validation errors when creating an invalid list item in the bottom form" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-bottom" do
+      fill_in "Name", with: ""
+
+      click_button "Add Item"
+
+      assert_text "prevented this item from being saved"
+      assert_text "Name can't be blank"
+    end
   end
 
   test "user edits a list item" do
