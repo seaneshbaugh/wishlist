@@ -11,13 +11,13 @@ class ListItemsTest < ApplicationSystemTestCase
     visit list_path(@list)
 
     within "#new-list-item-form-top" do
-      fill_in "Name", with: "Football"
+      fill_in "Name", with: "50mm Lens"
 
       click_button "Add Item"
     end
 
     within "#list-items" do
-      assert_text "Football"
+      assert_text "50mm Lens"
     end
   end
 
@@ -25,13 +25,67 @@ class ListItemsTest < ApplicationSystemTestCase
     visit list_path(@list)
 
     within "#new-list-item-form-bottom" do
-      fill_in "Name", with: "Football"
+      fill_in "Name", with: "50mm Lens"
 
       click_button "Add Item"
     end
 
     within "#list-items" do
-      assert_text "Football"
+      assert_text "50mm Lens"
+    end
+  end
+
+  test "filling out a draft in the top form and then creating an item in the bottom form does not clear the top form" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-top" do
+      fill_in "Name", with: "50mm Lens"
+    end
+
+    within "#new-list-item-form-bottom" do
+      fill_in "Name", with: "Baseball"
+
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_no_text "50mm Lens"
+      assert_text "Baseball"
+    end
+
+    within "#new-list-item-form-bottom" do
+      assert page.has_field?("Name", with: "")
+    end
+
+    within "#new-list-item-form-top" do
+      assert page.has_field?("Name", with: "50mm Lens")
+    end
+  end
+
+  test "filling out a draft in the bottom form and then creating an item in the top form does not clear the bottom form" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-bottom" do
+      fill_in "Name", with: "50mm Lens"
+    end
+
+    within "#new-list-item-form-top" do
+      fill_in "Name", with: "Baseball"
+
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_no_text "50mm Lens"
+      assert_text "Baseball"
+    end
+
+    within "#new-list-item-form-top" do
+      assert page.has_field?("Name", with: "")
+    end
+
+    within "#new-list-item-form-bottom" do
+      assert page.has_field?("Name", with: "50mm Lens")
     end
   end
 
