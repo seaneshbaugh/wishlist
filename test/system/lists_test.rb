@@ -97,10 +97,8 @@ class ListsTest < ApplicationSystemTestCase
 
     assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
 
-    first.reload
-    second.reload
-
-    assert_equal 1, first.position
-    assert_equal 0, second.position
+    assert_eventually do
+      first.reload.position == 1 && second.reload.position == 0
+    end
   end
 end
