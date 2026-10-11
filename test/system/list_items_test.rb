@@ -206,6 +206,8 @@ class ListItemsTest < ApplicationSystemTestCase
       click_button "Save Changes"
 
       assert_text "A nice pigskin"
+
+      assert_equal "A nice pigskin", list_item.reload.notes
     end
   end
 
@@ -242,7 +244,7 @@ class ListItemsTest < ApplicationSystemTestCase
     assert_not ListItem.exists?(list_item.id)
   end
 
-  test "user reorders list items" do
+  test "user reorders list items in the same priority group" do
     first = list_items(:football)
     second = list_items(:lucky_cat)
 
@@ -260,6 +262,30 @@ class ListItemsTest < ApplicationSystemTestCase
 
     assert_eventually do
       first.reload.position == 1 && second.reload.position == 0
+    end
+  end
+
+  test "user reorders list items in different priority groups" do
+    first = list_items(:football)
+    second = list_items(:lucky_cat)
+
+    first.update!(priority: 0, position: 0)
+    second.update!(priority: 1, position: 0)
+
+    visit list_path(@list)
+
+    first_row = find("[data-id='#{first.id}']")
+    second_row = find("[data-id='#{second.id}']")
+
+    first_row.find("[data-reorder-handle]").drag_to(second_row)
+
+    assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
+
+    assert_eventually do
+      first.reload
+      second.reload
+
+      first.priority == "high" && first.position == 1 && second.priority == "high" && second.position == 0
     end
   end
 end
