@@ -115,6 +115,84 @@ class ListItemsTest < ApplicationSystemTestCase
     end
   end
 
+  test "a validation error in the top form does not prevent creating a list item with the bottom form" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-top" do
+      fill_in "Name", with: ""
+    end
+
+    within "#new-list-item-form-bottom" do
+      fill_in "Name", with: "Baseball"
+    end
+
+    within "#new-list-item-form-top" do
+      click_button "Add Item"
+
+      assert_text "prevented this item from being saved"
+      assert_text "Name can't be blank"
+    end
+
+    within "#list-items" do
+      assert_no_text "Baseball"
+    end
+
+    within "#new-list-item-form-bottom" do
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_text "Baseball"
+    end
+
+    within "#new-list-item-form-top" do
+      assert page.has_field?("Name", with: "")
+    end
+
+    within "#new-list-item-form-bottom" do
+      assert page.has_field?("Name", with: "")
+    end
+  end
+
+  test "a validation error in the bottom form does not prevent creating a list item with the top form" do
+    visit list_path(@list)
+
+    within "#new-list-item-form-bottom" do
+      fill_in "Name", with: ""
+    end
+
+    within "#new-list-item-form-top" do
+      fill_in "Name", with: "Baseball"
+    end
+
+    within "#new-list-item-form-bottom" do
+      click_button "Add Item"
+
+      assert_text "prevented this item from being saved"
+      assert_text "Name can't be blank"
+    end
+
+    within "#list-items" do
+      assert_no_text "Baseball"
+    end
+
+    within "#new-list-item-form-top" do
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_text "Baseball"
+    end
+
+    within "#new-list-item-form-bottom" do
+      assert page.has_field?("Name", with: "")
+    end
+
+    within "#new-list-item-form-top" do
+      assert page.has_field?("Name", with: "")
+    end
+  end
+
   test "user edits a list item" do
     list_item = list_items(:football)
 
