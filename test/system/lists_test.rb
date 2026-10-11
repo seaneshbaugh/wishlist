@@ -49,6 +49,8 @@ class ListsTest < ApplicationSystemTestCase
     assert_current_path edit_list_path(list)
 
     assert_text "Ho Ho Ho"
+
+    assert_equal "Ho Ho Ho", list.reload.description
   end
 
   test "user sees validation errors when editing an invalid list" do
