@@ -297,7 +297,9 @@ class ListItemsTest < ApplicationSystemTestCase
 
     first_row.find("[data-reorder-handle]").drag_to(second_row)
 
-    assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
+    within "[data-priority='high']" do
+      assert_selector("[data-reorder-target='item']:first-child[data-id='#{second.id}']")
+    end
 
     assert_eventually do
       first.reload
