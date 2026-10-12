@@ -199,7 +199,7 @@ class ListItemsTest < ApplicationSystemTestCase
     visit list_path(@list)
 
     within "[data-id='#{list_item.id}']" do
-      click_button "Edit"
+      click_button "Edit #{list_item.name}"
 
       fill_in "Notes", with: "A nice pigskin"
 
@@ -217,7 +217,7 @@ class ListItemsTest < ApplicationSystemTestCase
     visit list_path(@list)
 
     within "[data-id='#{list_item.id}']" do
-      click_button "Edit"
+      click_button "Edit #{list_item.name}"
 
       fill_in "Name", with: ""
 
