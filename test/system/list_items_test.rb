@@ -89,7 +89,7 @@ class ListItemsTest < ApplicationSystemTestCase
     end
   end
 
-  test "user sees validation errors when creating an invalid list item in the top form" do
+  test "user sees validation errors when creating an invalid list item in the top form and can submit a corrected form" do
     visit list_path(@list)
 
     within "#new-list-item-form-top" do
@@ -99,10 +99,18 @@ class ListItemsTest < ApplicationSystemTestCase
 
       assert_text "prevented this item from being saved"
       assert_text "Name can't be blank"
+
+      fill_in "Name", with: "50mm Lens"
+
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_text "50mm Lens"
     end
   end
 
-  test "user sees validation errors when creating an invalid list item in the bottom form" do
+  test "user sees validation errors when creating an invalid list item in the bottom form and can submit a corrected form" do
     visit list_path(@list)
 
     within "#new-list-item-form-bottom" do
@@ -112,6 +120,14 @@ class ListItemsTest < ApplicationSystemTestCase
 
       assert_text "prevented this item from being saved"
       assert_text "Name can't be blank"
+
+      fill_in "Name", with: "50mm Lens"
+
+      click_button "Add Item"
+    end
+
+    within "#list-items" do
+      assert_text "50mm Lens"
     end
   end
 
