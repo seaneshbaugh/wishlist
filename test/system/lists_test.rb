@@ -67,6 +67,8 @@ class ListsTest < ApplicationSystemTestCase
     assert_text "Error updating list."
     assert_text "Name can't be blank"
     assert_text "Name is too short"
+
+    assert_equal "Christmas List", list.reload.name
   end
 
   test "user deletes a list" do

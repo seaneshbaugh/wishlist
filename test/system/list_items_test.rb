@@ -225,6 +225,8 @@ class ListItemsTest < ApplicationSystemTestCase
 
       assert_text "prevented this item from being saved"
       assert_text "Name can't be blank"
+
+      assert_equal "Football", list_item.reload.name
     end
   end
 
