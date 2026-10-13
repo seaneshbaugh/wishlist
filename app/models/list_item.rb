@@ -69,7 +69,7 @@ class ListItem < ApplicationRecord
   end
 
   def unrevealed_purchase_for(user)
-    purchase.find { |purchase| !purchase.revealed? && purchase.user_id == user.id }
+    purchases.find { |purchase| !purchase.revealed? && purchase.user_id == user.id }
   end
 
   def revealed_purchase?
