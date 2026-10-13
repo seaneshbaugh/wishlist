@@ -26,7 +26,7 @@ class Purchase < ApplicationRecord
   validate :only_one_unrevealed_purchase_per_user
 
   def revealed?
-    reveal_at <= Time.current
+    reveal_at && reveal_at <= Time.current
   end
 
   def editable_by?(user)
