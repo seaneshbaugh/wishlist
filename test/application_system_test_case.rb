@@ -14,6 +14,15 @@ Capybara.register_driver :remote_firefox do |app|
 end
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # Remote Firefox tests share one server port and browser container. This
+  # prevents multiple processes from attempting to bind to port 3001. The
+  # downside of this is that running `rails test:all` will now run all
+  # tests sequentially. In order for non-system tests to be run in parallel
+  # they should be run separately with `rails test` and `rails test:system`.
+  # If this project's tests are ever run as part of a CI pipeline then they
+  # should be run separately.
+  parallelize(workers: 1)
+
   driven_by :remote_firefox, screen_size: [ 1400, 1400 ]
 
   def assert_eventually(timeout: Capybara.default_max_wait_time)
