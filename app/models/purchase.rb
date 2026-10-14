@@ -26,7 +26,7 @@ class Purchase < ApplicationRecord
   validate :only_one_unrevealed_purchase_per_user
 
   def revealed?
-    reveal_at && reveal_at <= Time.current
+    reveal_at.present? && reveal_at <= Time.current
   end
 
   def editable_by?(user)
@@ -50,7 +50,7 @@ class Purchase < ApplicationRecord
   end
 
   def only_one_unrevealed_purchase_per_user
-    return unless user && list_item && !revealed?
+    return unless user && list_item && reveal_at.present? && !revealed?
 
     existing = list_item.purchases
                  .where(user_id: user_id)
