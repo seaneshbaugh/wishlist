@@ -1,4 +1,6 @@
 class ListItemsController < ApplicationController
+  before_action :authenticate_user!
+
   include ActionView::RecordIdentifier
 
   NEW_LIST_ITEM_FORM_IDS = %w[

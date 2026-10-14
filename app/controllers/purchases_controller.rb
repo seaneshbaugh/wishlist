@@ -1,4 +1,6 @@
 class PurchasesController < ApplicationController
+  before_action :authenticate_user!
+
   def create
     @list_item = find_list_item
 
@@ -162,7 +164,7 @@ class PurchasesController < ApplicationController
   end
 
   def find_list_item
-    find_list.list_items.find(list_item_id_param)
+    find_list.list_items.visible_to(current_user).find(list_item_id_param)
   end
 
   def find_purchase
