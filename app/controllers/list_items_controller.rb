@@ -1,12 +1,12 @@
 class ListItemsController < ApplicationController
-  before_action :authenticate_user!
-
   include ActionView::RecordIdentifier
 
   NEW_LIST_ITEM_FORM_IDS = %w[
     new-list-item-form-top
     new-list-item-form-bottom
   ].freeze
+
+  before_action :authenticate_user!
 
   def create
     @list = find_list
