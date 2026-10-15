@@ -87,7 +87,7 @@ class ListItem < ApplicationRecord
   end
 
   def set_initial_position
-    return if !position.nil? || priority.nil?
+    return unless list && priority
 
     last_position = list.list_items.where(priority: priority).maximum(:position)
 

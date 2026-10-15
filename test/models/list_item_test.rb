@@ -103,6 +103,68 @@ class ListItemTest < ActiveSupport::TestCase
     assert_equal 0, @item.revealed_purchase_quantity
   end
 
+  test "first item in a priority starts at zero independently of other groups and lists" do
+    @item.update!(position: 20)
+
+    lists(:birthday_list).list_items.create!(name: "Other item", priority: :low).update!(position: 99)
+
+    item = @item.list.list_items.create!(name: "New item", priority: :low)
+
+    assert_equal 0, item.reload.position
+  end
+
+  test "new items append after the highest position within their list and priority" do
+    @item.update!(position: 7)
+
+    first = @item.list.list_items.create!(name: "First addition", priority: :medium)
+    second = @item.list.list_items.create!(name: "Second addition", priority: :medium)
+
+    assert_equal 8, first.reload.position
+    assert_equal 9, second.reload.position
+  end
+
+  test "creation overwrites an explicitly supplied item position" do
+    item = @item.list.list_items.create!(name: "New item", priority: :medium, position: 99)
+
+    assert_equal 1, item.reload.position
+  end
+
+  test "item validation before saving recalculates position for the selected priority" do
+    list = @item.list
+    item = list.list_items.build(name: "New item", priority: :medium)
+
+    assert item.valid?
+    assert_equal 1, item.position
+
+    list.list_items.create!(name: "Intervening item", priority: :high)
+
+    item.priority = :high
+
+    item.save!
+
+    assert_equal "high", item.reload.priority
+    assert_equal 2, item.position
+  end
+
+  test "item updates preserve position and allow explicit reordering" do
+    @item.update!(position: 5)
+    @item.update!(notes: "Updated")
+
+    assert_equal 5, @item.reload.position
+
+    @item.update!(priority: :high, position: 2)
+
+    assert_equal "high", @item.reload.priority
+    assert_equal 2, @item.position
+  end
+
+  test "missing list returns validation errors without raising" do
+    item = ListItem.new(name: "New item")
+
+    assert_not item.valid?
+    assert item.errors.of_kind?(:list, :blank)
+  end
+
   private
 
   def purchase(**attributes)

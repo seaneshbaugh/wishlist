@@ -39,7 +39,7 @@ class List < ApplicationRecord
   end
 
   def set_initial_position
-    return unless position.nil?
+    return unless user
 
     last_position = user.lists.maximum(:position)
 
