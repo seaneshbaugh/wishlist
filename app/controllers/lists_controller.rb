@@ -2,7 +2,11 @@ class ListsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    @lists = visible_lists.ordered
+    @lists = visible_lists.ordered.load
+    @visible_item_counts = ListItem.visible_to(current_user)
+      .where(list_id: @lists.map(&:id))
+      .group(:list_id)
+      .count
   end
 
   def show

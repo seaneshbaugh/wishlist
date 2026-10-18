@@ -16,7 +16,7 @@
         <% end %>
       </p>
       <p class="mt-4 text-sm text-slate-500">
-        <%= pluralize(@lists.count, "list") %>
+        <%= pluralize(@lists.size, "list") %>
         containing
         <%#= pluralize(@lists.sum(:items_count), "item") %>.
       </p>
@@ -49,7 +49,7 @@
             </p>
             <div class="mt-4 flex items-center gap-6 text-sm text-slate-500">
               <span>
-                <%= pluralize(list.list_items.visible_to(current_user).size, "item") %>
+                <%= pluralize(@visible_item_counts.fetch(list.id, 0), "item") %>
               </span>
               <% if list.user == current_user %>
                 <% if list.public? %>

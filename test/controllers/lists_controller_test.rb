@@ -218,6 +218,66 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Christmas List", @list.reload.name
   end
 
+  test "index counts all owner items including hidden and fulfilled items and empty lists" do
+    @item.update!(visible: false)
+
+    list_items(:lucky_cat).purchases.create!(user: @viewer, quantity: 1, reveal_at: 1.day.from_now)
+
+    @list.update!(public: false)
+
+    get lists_path
+
+    assert_response :success
+    assert_select "[data-reorder-target='item'][data-id='#{@list.id}'] span", text: "3 items", count: 1
+    assert_select "[data-reorder-target='item'][data-id='#{lists(:birthday_list).id}'] span", text: "0 items", count: 1
+  end
+
+  test "index counts only viewer-visible items while retaining historical purchases" do
+    @item.update!(visible: false)
+
+    list_items(:lucky_cat).purchases.create!(user: users(:amelia), quantity: 1, reveal_at: 1.day.from_now)
+    list_items(:paint_brush).purchases.create!(user: @viewer, quantity: 3, reveal_at: 1.day.ago)
+
+    private_list = @owner.lists.create!(name: "Private wishlist", description: "", public: false)
+
+    private_list.list_items.create!(name: "Private item")
+
+    switch_user @viewer
+
+    get user_lists_path(@owner)
+
+    assert_response :success
+    assert_select "[data-reorder-target='item'][data-id='#{@list.id}'] span", text: "1 item", count: 1
+    assert_select "[data-reorder-target='item'][data-id='#{lists(:birthday_list).id}'] span", text: "0 items", count: 1
+    assert_select "[data-reorder-target='item'][data-id='#{private_list.id}']", count: 0
+  end
+
+  test "index query count does not grow with the number of lists for owners or viewers" do
+    # Warm up rendering before measuring database queries.
+    get lists_path
+
+    owner_before = index_select_count(lists_path)
+
+    switch_user @viewer
+
+    get user_lists_path(@owner)
+
+    viewer_before = index_select_count(user_lists_path(@owner))
+
+    4.times do |number|
+      list = @owner.lists.create!(name: "Extra wishlist #{number}", description: "")
+      list.list_items.create!(name: "Extra item")
+    end
+
+    assert_equal viewer_before, index_select_count(user_lists_path(@owner))
+
+    switch_user @owner
+
+    get lists_path
+
+    assert_equal owner_before, index_select_count(lists_path)
+  end
+
   private
 
   def switch_user(user)
@@ -228,5 +288,20 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
 
   def item_selector
     "[data-controller='list-item'][data-id='#{@item.id}']"
+  end
+
+  def index_select_count(path)
+    queries = []
+    subscriber = lambda do |*, payload|
+      queries << payload[:sql] if payload[:sql].match?(/\ASELECT/i) && payload[:name] != "SCHEMA"
+    end
+
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      get path
+    end
+
+    assert_response :success
+
+    queries.size
   end
 end
