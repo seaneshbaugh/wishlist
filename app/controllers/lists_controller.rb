@@ -65,9 +65,13 @@ class ListsController < ApplicationController
 
       redirect_to lists_url, status: :see_other
     else
+      load_list_items
+
+      @list_item = @list.list_items.build
+
       flash.now[:error] = t(".error")
 
-      render "show", status:  :unprocessable_entity
+      render "show", status: :unprocessable_entity
     end
   end
 

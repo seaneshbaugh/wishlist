@@ -278,6 +278,35 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_equal owner_before, index_select_count(lists_path)
   end
 
+  [ "text/html", "text/vnd.turbo-stream.html, text/html" ].each do |accept|
+    test "failed list deletion renders a usable show page for #{accept}" do
+      list_id = @list.id
+      prevent_destroy = ->(list) { throw :abort if list.id == list_id }
+
+      List.set_callback(:destroy, :before, prevent_destroy)
+
+      begin
+        assert_no_difference [ "List.count", "ListItem.count" ] do
+          delete list_path(@list), headers: { "Accept" => accept }
+        end
+
+        assert_response :unprocessable_entity
+        assert_select "h1", text: @list.name
+        assert_select "#list-items [data-id='#{@item.id}']", count: 1
+        assert_select "#new-list-item-form-top form[action='#{list_list_items_path(@list)}']", count: 1
+        assert_select "#new-list-item-form-bottom form[action='#{list_list_items_path(@list)}']", count: 1
+        assert_includes response.body, I18n.t("lists.destroy.error")
+
+        get lists_path
+
+        assert_response :success
+        assert_not_includes response.body, I18n.t("lists.destroy.error")
+      ensure
+        List.skip_callback(:destroy, :before, prevent_destroy)
+      end
+    end
+  end
+
   private
 
   def switch_user(user)
