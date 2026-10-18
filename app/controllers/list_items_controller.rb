@@ -13,7 +13,11 @@ class ListItemsController < ApplicationController
 
     @list_item = @list.list_items.build(list_item_params)
 
-    if @list_item.save
+    created = @list.with_lock do
+      @list_item.save
+    end
+
+    if created
       load_list_items
 
       respond_to do |format|
@@ -109,19 +113,21 @@ class ListItemsController < ApplicationController
 
     list = find_list
 
-    unless valid_reorder_positions?(list, positions)
-      return render json: { error: t(".invalid_list_item_positions") }, status: :unprocessable_entity
-    end
+    reordered = list.with_lock do
+      next false unless valid_reorder_positions?(list, positions)
 
-    list_items_by_id = list.list_items.where(id: positions.map { |position| position[:id] }).index_by(&:id)
+      list_items_by_id = list.list_items.where(id: positions.map { |position| position[:id] }).index_by(&:id)
 
-    ListItem.transaction do
       positions.each do |position|
         list_items_by_id.fetch(position[:id].to_i).update!(priority: position[:priority], position: position[:position])
       end
     end
 
-    head :no_content
+    if reordered
+      head :no_content
+    else
+      render json: { error: t(".invalid_list_item_positions") }, status: :unprocessable_entity
+    end
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: t(".error"), details: e.record.errors.full_messages }, status: :unprocessable_entity
   end

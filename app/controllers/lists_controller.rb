@@ -20,7 +20,11 @@ class ListsController < ApplicationController
   def create
     @list = current_user.lists.build(list_params)
 
-    if @list.save
+    created = current_user.with_lock do
+      @list.save
+    end
+
+    if created
       flash[:success] = t(".success")
 
       redirect_to list_url(@list), status: :see_other
@@ -66,19 +70,21 @@ class ListsController < ApplicationController
   def reorder
     positions = positions_params[:positions]
 
-    unless valid_reorder_positions?(positions)
-      return render json: { error: t(".invalid_list_positions") }, status: :unprocessable_entity
-    end
+    reordered = current_user.with_lock do
+      next false unless valid_reorder_positions?(positions)
 
-    lists_by_id = current_user.lists.where(id: positions.map { |position| position[:id] }).index_by(&:id)
+      lists_by_id = current_user.lists.where(id: positions.map { |position| position[:id] }).index_by(&:id)
 
-    List.transaction do
       positions.each do |position|
         lists_by_id.fetch(position[:id].to_i).update!(position: position[:position])
       end
     end
 
-    head :no_content
+    if reordered
+      head :no_content
+    else
+      render json: { error: t(".invalid_list_positions") }, status: :unprocessable_entity
+    end
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: t(".error"), details: e.record.errors.full_messages }, status: :unprocessable_entity
   end
