@@ -314,6 +314,57 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  %i[patch delete].each do |verb|
+    test "#{verb} rechecks permission when the purchase reveals during lock acquisition" do
+      purchase = existing_purchase(reveal_at: 1.minute.from_now.change(sec: 0), notes: "Original")
+
+      after_item_lock(-> { travel_to purchase.reveal_at }) do
+        public_send verb, purchase_path(purchase), params: { purchase: { notes: "Changed" } }, as: :turbo_stream
+      end
+
+      assert_response :not_found
+      assert_equal "Original", purchase.reload.notes
+    end
+
+    test "#{verb} reloads a reveal date changed during lock acquisition" do
+      purchase = existing_purchase(notes: "Original")
+      change = -> { Purchase.where(id: purchase.id).update_all(reveal_at: 1.day.ago) }
+
+      after_item_lock(change) do
+        public_send verb, purchase_path(purchase), params: { purchase: { notes: "Changed" } }, as: :turbo_stream
+      end
+
+      assert_response :not_found
+      assert_equal "Original", purchase.reload.notes
+    end
+
+    test "#{verb} returns not found when the purchase disappeared during lock acquisition" do
+      purchase = existing_purchase
+      change = -> { Purchase.where(id: purchase.id).delete_all }
+
+      after_item_lock(change) do
+        public_send verb, purchase_path(purchase), params: { purchase: { notes: "Changed" } }, as: :turbo_stream
+      end
+
+      assert_response :not_found
+    end
+  end
+
+  test "owner cannot delete a purchase whose reveal was postponed during lock acquisition" do
+    purchase = existing_purchase(reveal_at: 1.day.ago)
+
+    confirm_and_sign_in @owner
+
+    change = -> { Purchase.where(id: purchase.id).update_all(reveal_at: 1.day.from_now) }
+
+    after_item_lock(change) do
+      delete purchase_path(purchase), as: :turbo_stream
+    end
+
+    assert_response :not_found
+    assert Purchase.exists?(purchase.id)
+  end
+
   private
 
   def purchase_path(purchase)
@@ -328,5 +379,27 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
 
   def existing_purchase(**attributes)
     @item.purchases.create!({ user: @purchaser, quantity: 1, reveal_at: @reveal_at }.merge(attributes))
+  end
+
+  # Inject the state a waiting request would encounter once its item lock is
+  # acquired, before it reloads the purchase. These are deterministic regression
+  # tests, not simultaneous-connection tests of PostgreSQL's locking behavior.
+  # Database changes injected here share the request transaction and roll back
+  # with it when authorization raises RecordNotFound.
+  def after_item_lock(change)
+    triggered = false
+    subscriber = lambda do |*, payload|
+      if !triggered && payload[:sql].include?('"list_items"') && payload[:sql].include?("FOR UPDATE")
+        triggered = true
+
+        change.call
+      end
+    end
+
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      yield
+    end
+
+    assert triggered, "Expected the request to acquire the list item lock"
   end
 end

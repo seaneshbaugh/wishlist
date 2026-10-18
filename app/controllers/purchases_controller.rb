@@ -60,6 +60,10 @@ class PurchasesController < ApplicationController
     updated = ListItem.transaction do
       @list_item.lock!
 
+      @purchase.reload
+
+      authorize_purchase_update!
+
       @purchase.update(purchase_params)
     end
 
@@ -101,6 +105,10 @@ class PurchasesController < ApplicationController
 
     destroyed = ListItem.transaction do
       @list_item.lock!
+
+      @purchase.reload
+
+      authorize_purchase_destroy!
 
       @purchase.destroy
     end
