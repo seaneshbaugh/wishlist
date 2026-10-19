@@ -47,12 +47,13 @@
 
 ### 1. Schema and model
 
-- [ ] Fill in the existing uncommitted Friendship migration/model rather than generate a second pair.
-- [ ] Add required `requester_id` and `recipient_id` foreign keys to users, nullable `accepted_at`, and the existing timestamps. Null acceptance means pending; a timestamp means accepted.
-- [ ] Add database and model checks preventing self-friendship. Add a unique expression index on `LEAST(requester_id, recipient_id), GREATEST(requester_id, recipient_id)` to prohibit duplicate pairs in either direction, including simultaneous crossed requests.
-- [ ] Index participant lookups and add explicit `requester`/`recipient` associations. Ensure deleting either user removes their pending and accepted friendship rows without deleting the other user.
-- [ ] Add incoming/outgoing association names, pending/accepted scopes, and a `User#friends` relation covering either side of accepted friendships. Keep it chainable for ordering and grouped list counts. Do not create reciprocal rows or a separate request model.
-- [ ] Keep participants immutable through controller parameters. Acceptance only changes `accepted_at`; removal/decline deletes the row.
+- [x] Fill in the existing uncommitted Friendship migration/model rather than generate a second pair.
+- [x] Add required `requester_id` and `recipient_id` foreign keys to users, nullable `accepted_at`, and the existing timestamps. Null acceptance means pending; a timestamp means accepted.
+- [x] Add database and model checks preventing self-friendship. Add a unique expression index on `LEAST(requester_id, recipient_id), GREATEST(requester_id, recipient_id)` to prohibit duplicate pairs in either direction, including simultaneous crossed requests.
+- [x] Index participant lookups and add explicit `requester`/`recipient` associations. Ensure deleting either user removes their pending and accepted friendship rows without deleting the other user.
+- [x] Add incoming/outgoing association names, pending/accepted scopes, and a `User#friends` relation covering either side of accepted friendships. Keep it chainable for ordering and grouped list counts. Do not create reciprocal rows or a separate request model.
+- [ ] Keep participants immutable through controller parameters. Acceptance only changes `accepted_at`; removal/decline deletes the row. (Enforced when controllers are added in section 2.)
+
 
 ### 2. Request lifecycle and authorization
 

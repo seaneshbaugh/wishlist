@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_180430) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_180430) do
     t.index ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
     t.index ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
     t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
+  end
+
+  create_table "friendships", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.bigint "recipient_id", null: false
+    t.bigint "requester_id", null: false
+    t.datetime "updated_at", null: false
+    t.index "LEAST(requester_id, recipient_id), GREATEST(requester_id, recipient_id)", name: "index_friendships_on_user_pair", unique: true
+    t.index ["recipient_id"], name: "index_friendships_on_recipient_id"
+    t.index ["requester_id"], name: "index_friendships_on_requester_id"
+    t.check_constraint "requester_id <> recipient_id", name: "friendships_different_users"
   end
 
   create_table "list_items", force: :cascade do |t|
@@ -107,6 +119,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_180430) do
     t.check_constraint "username::text ~ '^[A-Za-z][A-Za-z0-9_]{3,31}$'::text", name: "users_username_format"
   end
 
+  add_foreign_key "friendships", "users", column: "recipient_id"
+  add_foreign_key "friendships", "users", column: "requester_id"
   add_foreign_key "list_items", "lists"
   add_foreign_key "lists", "users"
   add_foreign_key "purchases", "list_items"

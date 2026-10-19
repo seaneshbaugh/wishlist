@@ -1,0 +1,2 @@
+# Friendships are created explicitly in tests that need them.
+# Existing users are not automatically connected.

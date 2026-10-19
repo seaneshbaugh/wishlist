@@ -1,0 +1,20 @@
+en:
+  activerecord:
+    models:
+      friendship: "Friendship"
+    attributes:
+      friendship:
+        id: "ID"
+        requester: "Requester"
+        recipient: "Recipient"
+        accepted_at: "Accepted At"
+        created_at: "Created At"
+        updated_at: "Updated At"
+    errors:
+      models:
+        friendship:
+          attributes:
+            base:
+              already_exists: "A friendship or pending request already exists between these users"
+            recipient:
+              same_as_requester: "can't be the same as the requester"
