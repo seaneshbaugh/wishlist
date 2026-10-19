@@ -76,7 +76,7 @@ class ListsController < ApplicationController
   end
 
   def reorder
-    positions = positions_params[:positions]
+    positions = reorder_positions
 
     reordered = current_user.with_lock do
       next false unless valid_reorder_positions?(positions)
@@ -84,7 +84,7 @@ class ListsController < ApplicationController
       lists_by_id = current_user.lists.where(id: positions.map { |position| position[:id] }).index_by(&:id)
 
       positions.each do |position|
-        lists_by_id.fetch(position[:id].to_i).update!(position: position[:position])
+        lists_by_id.fetch(position[:id]).update!(position: position[:position])
       end
     end
 
@@ -132,15 +132,25 @@ class ListsController < ApplicationController
     params.require(:list).permit(:name, :description, :public)
   end
 
-  def positions_params
-    params.permit(positions: [ :id, :position ])
+  def reorder_positions
+    positions = params.permit(positions: [ :id, :position ])[:positions]
+
+    return unless positions.is_a?(Array)
+
+    positions.map do |position|
+      return unless position.is_a?(ActionController::Parameters)
+
+      { id: Integer(position[:id].to_s, 10), position: Integer(position[:position].to_s, 10) }
+    end
+  rescue ArgumentError
+    nil
   end
 
   def valid_reorder_positions?(positions)
     return false unless positions.present?
 
-    ids = positions.map { |position| position[:id].to_i }
-    positions_values = positions.map { |position| position[:position].to_i }
+    ids = positions.map { |position| position[:id] }
+    positions_values = positions.map { |position| position[:position] }
 
     ids.uniq.length == ids.length &&
       ids.sort == current_user.lists.ids.sort &&

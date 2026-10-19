@@ -307,6 +307,62 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  %i[id position].each do |attribute|
+    [ nil, "", "oops", "1oops", "1.0", "1e0", -1, 1.0, true, [], {} ].each do |value|
+      test "reorder rejects #{attribute} #{value.inspect} without changes" do
+        before = @owner.lists.order(:id).pluck(:id, :position)
+        submitted = @owner.lists.order(:id).each_with_index.map { |list, index| { id: list.id, position: index } }
+        submitted.first[attribute] = value
+
+        patch reorder_lists_path, params: { positions: submitted }, as: :json
+
+        assert_response :unprocessable_entity
+        assert_equal before, @owner.lists.order(:id).pluck(:id, :position)
+      end
+    end
+  end
+
+  %i[id position].each do |attribute|
+    test "reorder rejects a valid #{attribute} with trailing garbage" do
+      before = @owner.lists.order(:id).pluck(:id, :position)
+      submitted = @owner.lists.order(:id).each_with_index.map { |list, index| { id: list.id, position: index } }
+      submitted.first[attribute] = "#{submitted.first[attribute]}oops"
+
+      patch reorder_lists_path, params: { positions: submitted }, as: :json
+
+      assert_response :unprocessable_entity
+      assert_equal before, @owner.lists.order(:id).pluck(:id, :position)
+    end
+  end
+
+  test "reorder accepts base ten IDs and positions with whitespace signs and underscores" do
+    submitted = @owner.lists.order(:id).each_with_index.map { |list, index| { id: list.id, position: index } }
+
+    submitted.each do |entry|
+      entry[:id] = " +#{entry[:id].to_s.chars.join("_")} "
+      entry[:position] = " #{entry[:position]} "
+    end
+
+    patch reorder_lists_path, params: { positions: submitted }, as: :json
+
+    assert_response :no_content
+
+    submitted.each do |entry|
+      assert_equal entry[:position].to_i, @owner.lists.find(Integer(entry[:id], 10)).position
+    end
+  end
+
+  [ nil, [], {}, "invalid", [ nil ], [ "invalid" ] ].each do |payload|
+    test "reorder rejects invalid positions shape #{payload.inspect}" do
+      before = @owner.lists.order(:id).pluck(:id, :position)
+
+      patch reorder_lists_path, params: { positions: payload }, as: :json
+
+      assert_response :unprocessable_entity
+      assert_equal before, @owner.lists.order(:id).pluck(:id, :position)
+    end
+  end
+
   private
 
   def switch_user(user)

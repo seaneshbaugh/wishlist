@@ -109,7 +109,7 @@ class ListItemsController < ApplicationController
   end
 
   def reorder
-    positions = positions_params[:positions]
+    positions = reorder_positions
 
     list = find_list
 
@@ -119,7 +119,7 @@ class ListItemsController < ApplicationController
       list_items_by_id = list.list_items.where(id: positions.map { |position| position[:id] }).index_by(&:id)
 
       positions.each do |position|
-        list_items_by_id.fetch(position[:id].to_i).update!(priority: position[:priority], position: position[:position])
+        list_items_by_id.fetch(position[:id]).update!(priority: position[:priority], position: position[:position])
       end
     end
 
@@ -152,8 +152,18 @@ class ListItemsController < ApplicationController
     params.require(:list_item).permit(:name, :notes, :url, :price, :quantity, :priority, :visible)
   end
 
-  def positions_params
-    params.permit(positions: [ :id, :priority, :position ])
+  def reorder_positions
+    positions = params.permit(positions: [ :id, :priority, :position ])[:positions]
+
+    return unless positions.is_a?(Array)
+
+    positions.map do |position|
+      return unless position.is_a?(ActionController::Parameters)
+
+      { id: Integer(position[:id].to_s, 10), position: Integer(position[:position].to_s, 10), priority: position[:priority] }
+    end
+  rescue ArgumentError
+    nil
   end
 
   def form_id_param
@@ -165,8 +175,8 @@ class ListItemsController < ApplicationController
   def valid_reorder_positions?(list, positions)
     return false unless positions.present?
 
-    ids = positions.map { |position| position[:id].to_i }
-    positions_by_priority = positions.group_by { |position| position[:priority] }.transform_values { |positions| positions.map { |position| position[:position].to_i } }
+    ids = positions.map { |position| position[:id] }
+    positions_by_priority = positions.group_by { |position| position[:priority] }.transform_values { |positions| positions.map { |position| position[:position] } }
 
     ids.uniq.length == ids.length &&
       ids.sort == list.list_items.ids.sort &&

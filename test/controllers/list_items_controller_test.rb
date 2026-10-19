@@ -132,6 +132,62 @@ class ListItemsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  %i[id position].each do |attribute|
+    [ nil, "", "oops", "1oops", "1.0", "1e0", -1, 1.0, true, [], {} ].each do |value|
+      test "reorder rejects #{attribute} #{value.inspect} without changes" do
+        before = @list.list_items.order(:id).pluck(:id, :priority, :position)
+        submitted = positions
+        submitted.first[attribute] = value
+
+        patch reorder_list_list_items_path(@list), params: { positions: submitted }, as: :json
+
+        assert_response :unprocessable_entity
+        assert_equal before, @list.list_items.order(:id).pluck(:id, :priority, :position)
+      end
+    end
+  end
+
+  %i[id position].each do |attribute|
+    test "reorder rejects a valid #{attribute} with trailing garbage" do
+      before = @list.list_items.order(:id).pluck(:id, :priority, :position)
+      submitted = positions
+      submitted.first[attribute] = "#{submitted.first[attribute]}oops"
+
+      patch reorder_list_list_items_path(@list), params: { positions: submitted }, as: :json
+
+      assert_response :unprocessable_entity
+      assert_equal before, @list.list_items.order(:id).pluck(:id, :priority, :position)
+    end
+  end
+
+  test "reorder accepts base ten IDs and positions with whitespace signs and underscores" do
+    submitted = positions
+
+    submitted.each do |entry|
+      entry[:id] = " +#{entry[:id].to_s.chars.join("_")} "
+      entry[:position] = " #{entry[:position]} "
+    end
+
+    patch reorder_list_list_items_path(@list), params: { positions: submitted }, as: :json
+
+    assert_response :no_content
+
+    submitted.each do |entry|
+      assert_equal entry[:position].to_i, @list.list_items.find(Integer(entry[:id], 10)).position
+    end
+  end
+
+  [ nil, [], {}, "invalid", [ nil ], [ "invalid" ] ].each do |payload|
+    test "reorder rejects invalid positions shape #{payload.inspect}" do
+      before = @list.list_items.order(:id).pluck(:id, :priority, :position)
+
+      patch reorder_list_list_items_path(@list), params: { positions: payload }, as: :json
+
+      assert_response :unprocessable_entity
+      assert_equal before, @list.list_items.order(:id).pluck(:id, :priority, :position)
+    end
+  end
+
   private
 
   def positions
