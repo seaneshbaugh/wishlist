@@ -182,6 +182,71 @@ class PurchaseTest < ActiveSupport::TestCase
     assert historical.reload.revealed?
   end
 
+  test "lowering requested quantity does not prevent unrelated purchase edits" do
+    reservation = purchase(quantity: 2)
+
+    purchase(user: @other)
+
+    @item.update!(quantity: 1)
+
+    assert reservation.update(notes: "Gift wrapped"), reservation.errors.full_messages.to_sentence
+    assert_equal "Gift wrapped", reservation.reload.notes
+    assert_equal 2, reservation.quantity
+  end
+
+  test "purchase quantity can decrease even when the total still exceeds the request" do
+    reservation = purchase(quantity: 2)
+
+    purchase(user: @other)
+
+    @item.update!(quantity: 1)
+
+    assert reservation.update(quantity: 1), reservation.errors.full_messages.to_sentence
+    assert_equal 1, reservation.reload.quantity
+    assert_equal 2, @item.purchases.sum(:quantity)
+  end
+
+  test "an overfulfilled item still rejects purchase increases and new purchases" do
+    reservation = purchase(quantity: 2)
+
+    purchase(user: @other)
+
+    @item.update!(quantity: 1)
+
+    assert_not reservation.update(quantity: 3)
+    assert reservation.errors.of_kind?(:quantity, :exceeds_remaining_quantity)
+    assert_equal 2, reservation.reload.quantity
+
+    candidate = build_purchase(user: @owner)
+
+    assert_not candidate.valid?
+    assert candidate.errors.of_kind?(:quantity, :exceeds_remaining_quantity)
+  end
+
+  test "purchase quantity may increase when the resulting total fits the request" do
+    reservation = purchase
+
+    purchase(user: @other)
+
+    assert reservation.update(quantity: 2), reservation.errors.full_messages.to_sentence
+    assert_equal 2, reservation.reload.quantity
+  end
+
+  test "decreasing a purchase still requires a positive integer quantity" do
+    reservation = purchase(quantity: 2)
+
+    @item.update!(quantity: 1)
+
+    [ nil, 0, -1, 1.5 ].each do |quantity|
+      reservation.quantity = quantity
+
+      assert_not reservation.valid?
+      assert reservation.errors[:quantity].any?
+    end
+
+    assert_equal 2, reservation.reload.quantity
+  end
+
   private
 
   def build_purchase(**attributes)

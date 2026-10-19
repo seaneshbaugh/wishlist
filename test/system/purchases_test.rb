@@ -318,6 +318,40 @@ class PurchasesTest < ApplicationSystemTestCase
     end
   end
 
+  test "purchaser can edit notes and reduce quantity after the owner lowers the request" do
+    purchase = create_purchase(quantity: 2, notes: "Original")
+
+    create_purchase(user: @other_viewer)
+
+    @item.update!(quantity: 1)
+
+    visit_list
+
+    open_purchase
+
+    within purchase_form do
+      fill_in "Notes", with: "Gift wrapped"
+      click_button "Save Purchase"
+    end
+
+    wait_for_purchase
+
+    assert_equal "Gift wrapped", purchase.reload.notes
+    assert_equal 2, purchase.quantity
+
+    open_purchase
+
+    within purchase_form do
+      fill_in "Quantity", with: 1
+      click_button "Save Purchase"
+    end
+
+    wait_for_purchase
+
+    assert_equal 1, purchase.reload.quantity
+    assert_equal 2, @item.purchases.sum(:quantity)
+  end
+
   private
 
   def visit_list

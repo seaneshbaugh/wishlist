@@ -41,6 +41,7 @@ class Purchase < ApplicationRecord
 
   def quantity_does_not_exceed_remaining_quantity
     return unless list_item && quantity
+    return if persisted? && quantity <= quantity_in_database
 
     purchased_quantity = list_item.purchases.where.not(id: id).sum(:quantity)
 

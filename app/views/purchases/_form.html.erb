@@ -33,15 +33,16 @@
     <% end %>
     <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
       <div class="md:col-span-4">
+        <% maximum_quantity = [list_item.quantity, purchase.quantity_in_database || 0].max %>
         <%= form.label :quantity,
             class: "block text-sm font-medium text-slate-700" %>
         <%= form.number_field :quantity,
             min: 1,
-            max: list_item.quantity,
+            max: maximum_quantity,
             step: 1,
             class: "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
         <p class="mt-1 text-xs text-slate-400">
-          Up to <%= list_item.quantity %>
+          Up to <%= maximum_quantity %>
         </p>
       </div>
       <div class="md:col-span-4">
