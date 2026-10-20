@@ -1,0 +1,7 @@
+<%= turbo_stream.replace "friend-request-form" do %>
+  <%= render "form", email: @email, error: @form_error %>
+<% end %>
+
+<%= turbo_stream.append "flash" do %>
+  <%= render "shared/notification", color_classes: "border-red-200 bg-red-50 text-red-700", message: @form_error %>
+<% end %>

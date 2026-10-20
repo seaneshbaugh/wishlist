@@ -1,22 +1,6 @@
 <div class="mx-auto w-full max-w-5xl">
   <h1 class="text-3xl font-semibold">Friends</h1>
   <%= link_to "Incoming friend requests", requests_friendships_path, class: "mt-4 inline-block text-blue-600 underline" %>
-  <%= render "friendships/form" %>
-  <% if @friends.empty? %>
-    <p class="mt-8">You have no friends yet. Send a request using their email address.</p>
-  <% else %>
-    <ul class="mt-8 divide-y divide-slate-200">
-      <% @friends.each do |friend| %>
-        <li class="flex items-center justify-between py-4">
-          <div>
-            <%= link_to friend.username, friend_lists_path(friend), class: "font-medium text-blue-600 underline" %>
-            <span><%= pluralize(@visible_list_counts.fetch(friend.id, 0), "list") %></span>
-          </div>
-          <%= button_to "Remove #{friend.username}", friendship_path(@friendships_by_friend_id.fetch(friend.id)),
-              method: :delete, form: { data: { turbo_confirm: "Remove #{friend.username}? Both of you will lose access to each other's lists and purchases." } },
-              class: "text-red-700 underline" %>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
+  <%= render "friendships/form", email: @email, error: @form_error %>
+  <%= render "friends" %>
 </div>

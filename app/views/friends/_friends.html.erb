@@ -1,0 +1,19 @@
+<div id="friends">
+  <% if @friends.empty? %>
+    <p class="mt-8">You have no friends yet. Send a request using their email address.</p>
+  <% else %>
+    <ul class="mt-8 divide-y divide-slate-200">
+      <% @friends.each do |friend| %>
+        <li class="flex items-center justify-between py-4">
+          <div>
+            <%= link_to friend.username, friend_lists_path(friend), class: "font-medium text-blue-600 underline" %>
+            <span><%= pluralize(@visible_list_counts.fetch(friend.id, 0), "list") %></span>
+          </div>
+          <%= button_to "Remove #{friend.username}", friendship_path(@friendships_by_friend_id.fetch(friend.id)),
+              method: :delete, form: { data: { turbo_confirm: "Remove #{friend.username}? Both of you will lose access to each other's lists and purchases." } },
+              class: "text-red-700 underline" %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

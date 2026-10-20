@@ -513,6 +513,90 @@ class FriendshipsControllerTest < ActionDispatch::IntegrationTest
     assert friendship.reload.accepted_at.present?
   end
 
+  test "Turbo creation returns the same generic stream for known and unknown emails" do
+    post friendships_path, params: { friendship: { email: "unknown@example.com" } }, as: :turbo_stream
+
+    assert_response :success
+
+    unknown_body = response.body
+
+    assert_select "turbo-stream[action='replace'][target='friend-request-form']", count: 1
+    assert_select "turbo-stream[action='append'][target='flash']", count: 1
+
+    assert_enqueued_with job: FriendshipRequestNotificationJob do
+      post friendships_path, params: { friendship: { email: @recipient.email } }, as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_equal Mime[:turbo_stream], response.media_type
+    assert_equal unknown_body, response.body
+    assert_nil flash[:success]
+  end
+
+  test "Turbo validation replaces only the request form and preserves the email" do
+    post friendships_path, params: { friendship: { email: "invalid" } }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_select "turbo-stream[action='replace'][target='friend-request-form'] input[value='invalid']", count: 1
+    assert_select "turbo-stream[action='replace']", count: 1
+    assert_select "turbo-stream[action='append'][target='flash']", count: 1
+    assert_nil flash[:error]
+  end
+
+  test "Turbo acceptance refreshes both collections with current visible list counts" do
+    friendship = create_friendship
+
+    switch_user(@recipient)
+
+    patch accept_friendship_path(friendship), as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[target='friends'] a[href='#{friend_lists_path(@requester)}']", text: @requester.username
+    assert_select "turbo-stream[target='friends'] span", text: "2 lists"
+    assert_select "turbo-stream[target='incoming-friend-requests']", text: /You have no incoming friend requests/
+    assert_select "turbo-stream[target='flash']", text: /Friend request accepted/
+    assert_select "turbo-stream[target='friend-request-form']", count: 0
+    assert_nil flash[:success]
+  end
+
+  test "Turbo removal and decline refresh empty states without replacing the request form" do
+    friendship = create_friendship(accepted_at: Time.current)
+
+    delete friendship_path(friendship), as: :turbo_stream
+
+    assert_response :success
+
+    assert_select "turbo-stream[target='friends']", text: /You have no friends yet/
+    assert_select "turbo-stream[target='incoming-friend-requests']", text: /You have no incoming friend requests/
+    assert_select "turbo-stream[target='friend-request-form']", count: 0
+
+    friendship = create_friendship(requester: @recipient, recipient: @requester)
+
+    delete friendship_path(friendship), as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[target='incoming-friend-requests']", text: /You have no incoming friend requests/
+  end
+
+  test "failed Turbo removal leaves both collections in place and reports an error" do
+    friendship = create_friendship(accepted_at: Time.current)
+    prevent_destroy = ->(record) { throw :abort if record.id == friendship.id }
+
+    Friendship.set_callback(:destroy, :before, prevent_destroy)
+
+    begin
+      assert_no_difference "Friendship.count" do
+        delete friendship_path(friendship), as: :turbo_stream
+      end
+
+      assert_response :unprocessable_entity
+      assert_select "turbo-stream[action='replace']", count: 0
+      assert_select "turbo-stream[action='append'][target='flash']", text: /Unable to remove/
+    ensure
+      Friendship.skip_callback(:destroy, :before, prevent_destroy)
+    end
+  end
+
   private
 
   def switch_user(user)

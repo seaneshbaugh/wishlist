@@ -1,20 +1,6 @@
 <div class="mx-auto w-full max-w-5xl">
   <h1 class="text-3xl font-semibold">Incoming friend requests</h1>
   <%= link_to "Friends", friends_path, class: "mt-4 inline-block text-blue-600 underline" %>
-  <%= render "form" %>
-  <% if @incoming_requests.empty? %>
-    <p class="mt-8">You have no incoming friend requests.</p>
-  <% else %>
-    <ul class="mt-8 divide-y divide-slate-200">
-      <% @incoming_requests.each do |friendship| %>
-        <li class="flex items-center justify-between py-4" id="<%= dom_id(friendship) %>">
-          <span><%= friendship.requester.username %></span>
-          <div class="flex gap-4">
-            <%= button_to "Accept #{friendship.requester.username}", accept_friendship_path(friendship), method: :patch, class: "text-blue-600 underline" %>
-            <%= button_to "Decline #{friendship.requester.username}", friendship_path(friendship), method: :delete, class: "text-red-700 underline" %>
-          </div>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
+  <%= render "form", email: @email, error: @form_error %>
+  <%= render "requests" %>
 </div>

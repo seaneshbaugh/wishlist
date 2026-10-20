@@ -12,7 +12,7 @@ class ListsTest < ApplicationSystemTestCase
     fill_in "Name", with: "Birthday Ideas"
     fill_in "Description", with: "Things I might want for my birthday"
 
-    choose "Public"
+    choose "Friends"
 
     click_button "Create List"
 

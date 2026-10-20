@@ -1,5 +1,10 @@
-<%= form_with url: friendships_path, scope: :friendship, class: "mt-6 space-y-3" do |form| %>
-  <%= form.label :email, "Friend's email address", class: "block font-medium" %>
-  <%= form.email_field :email, value: @email, required: true, class: "rounded border border-slate-300 px-3 py-2" %>
-  <%= form.submit "Send friend request", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
-<% end %>
+<div id="friend-request-form">
+  <%= form_with url: friendships_path, scope: :friendship, class: "mt-6 space-y-3" do |form| %>
+    <% if error.present? %>
+      <p role="alert" class="text-red-700"><%= error %></p>
+    <% end %>
+    <%= form.label :email, "Friend's email address", class: "block font-medium" %>
+    <%= form.email_field :email, value: email, required: true, class: "rounded border border-slate-300 px-3 py-2" %>
+    <%= form.submit "Send friend request", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
+  <% end %>
+</div>

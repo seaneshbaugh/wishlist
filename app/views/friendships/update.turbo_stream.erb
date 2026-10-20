@@ -1,0 +1,11 @@
+<%= turbo_stream.replace "friends" do %>
+  <%= render "friends/friends" %>
+<% end %>
+
+<%= turbo_stream.replace "incoming-friend-requests" do %>
+  <%= render "requests" %>
+<% end %>
+
+<%= turbo_stream.append "flash" do %>
+  <%= render "shared/notification", color_classes: "border-green-200 bg-green-50 text-green-700", message: message %>
+<% end %>

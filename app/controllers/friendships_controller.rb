@@ -8,22 +8,28 @@ class FriendshipsController < ApplicationController
   def create
     @email = params.require(:friendship).permit(:email)[:email].to_s.strip.downcase
 
-    unless Devise.email_regexp.match?(@email)
-      load_requests
-
-      flash.now[:error] = t(".invalid_email")
-
-      return render "requests", status: :unprocessable_entity
+    if Devise.email_regexp.match?(@email)
+      recipient = User.where.not(confirmed_at: nil).find_by(email: @email)
+      @form_error = t(".self_request") if recipient == current_user
+    else
+      @form_error = t(".invalid_email")
     end
 
-    recipient = User.where.not(confirmed_at: nil).find_by(email: @email)
+    if @form_error
+      respond_to do |format|
+        format.turbo_stream do
+          render "form_error", status: :unprocessable_entity
+        end
+        format.html do
+          load_requests
 
-    if recipient == current_user
-      load_requests
+          flash.now[:error] = @form_error
 
-      flash.now[:error] = t(".self_request")
+          render "requests", status: :unprocessable_entity
+        end
+      end
 
-      return render "requests", status: :unprocessable_entity
+      return
     end
 
     friendship = find_or_request_friendship(recipient) if recipient
@@ -35,17 +41,31 @@ class FriendshipsController < ApplicationController
     end
 
     if friendship&.accepted_at.present?
-      flash[:notice] = t(".already_friends")
+      respond_to do |format|
+        format.turbo_stream do
+          render "create", locals: { message: t(".already_friends") }
+        end
+        format.html do
+          flash[:notice] = t(".already_friends")
 
-      redirect_to friends_url, status: :see_other
+          redirect_to friends_url, status: :see_other
+        end
+      end
     elsif friendship && friendship.recipient_id == current_user.id
       flash[:notice] = t(".incoming_request", username: recipient.username)
 
       redirect_to requests_friendships_url, status: :see_other
     else
-      flash[:success] = t(".success")
+      respond_to do |format|
+        format.turbo_stream do
+          render "create", locals: { message: t(".success") }
+        end
+        format.html do
+          flash[:success] = t(".success")
 
-      redirect_to friends_url, status: :see_other
+          redirect_to friends_url, status: :see_other
+        end
+      end
     end
   end
 
@@ -62,9 +82,19 @@ class FriendshipsController < ApplicationController
       FriendshipAcceptanceNotificationJob.perform_later(friendship.id)
     end
 
-    flash[:success] = t(".success")
+    respond_to do |format|
+      format.turbo_stream do
+        load_friends
+        load_requests
 
-    redirect_to friends_url, status: :see_other
+        render "update", locals: { message: t(".success") }
+      end
+      format.html do
+        flash[:success] = t(".success")
+
+        redirect_to friends_url, status: :see_other
+      end
+    end
   end
 
   def destroy
@@ -80,20 +110,48 @@ class FriendshipsController < ApplicationController
       friendship.destroy
     end
 
-    if destroyed
-      flash[:success] = t(".success")
-    else
-      flash[:error] = t(".error")
-    end
+    respond_to do |format|
+      format.turbo_stream do
+        if destroyed
+          load_friends
+          load_requests
 
-    if accepted
-      redirect_to friends_url, status: :see_other
-    else
-      redirect_to requests_friendships_url, status: :see_other
+          render "update", locals: { message: t(".success") }
+        else
+          render "destroy_error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+      end
+      format.html do
+        if destroyed
+          flash[:success] = t(".success")
+        else
+          flash[:error] = t(".error")
+        end
+
+        if accepted
+          redirect_to friends_url, status: :see_other
+        else
+          redirect_to requests_friendships_url, status: :see_other
+        end
+      end
     end
   end
 
   private
+
+  def load_friends
+    @friends = current_user.friends.alphabetical.load
+    @visible_list_counts = List.publicly_visible.where(user_id: @friends.map(&:id)).group(:user_id).count
+    @friendships_by_friend_id = Friendship.accepted
+      .where(requester: current_user).or(Friendship.accepted.where(recipient: current_user))
+      .index_by do |friendship|
+        if friendship.requester_id == current_user.id
+          friendship.recipient_id
+        else
+          friendship.requester_id
+        end
+      end
+  end
 
   def load_requests
     @incoming_requests = current_user.incoming_friendships.pending.includes(:requester).order(:created_at)

@@ -91,12 +91,12 @@
 
 ### 5. UI and Turbo behavior
 
-Basic pages are functional with Turbo-followed redirects; dedicated Turbo Stream updates and further presentation work remain below.
+Friendship forms use targeted Turbo Stream responses with HTML redirect fallbacks. Crossed requests deliberately navigate to the incoming-requests page; acceptance and removal update the current page without clearing email drafts.
 - [x] Friends index: alphabetized accepted friends, including friends with zero visible lists; grouped count of friends-visible lists; link each friend directly to their lists; clear empty state.
 - [x] Add the email request form and a link to the incoming-requests page. Do not add user search, suggestions, mutual-friend counts, or outgoing requests.
 - [x] Incoming requests page: recognizable sender, Accept and Decline controls, and an empty state. Crossed-request responses link here or present the same explicitly authorized acceptance control.
 - [x] Add friendship removal with a clear Turbo confirmation explaining that both people lose access to each other's lists and purchases. Use ordinary confirmation rather than typed-email confirmation for beta.
-- [ ] Use `form_with`, Turbo Stream templates, and existing notifications. Preserve submitted email on validation errors and provide consistent generic success feedback without account-existence clues. Refresh affected request/friend lists and counts after successful actions.
+- [x] Use `form_with`, Turbo Stream templates, and existing notifications. Preserve submitted email on validation errors and provide consistent generic success feedback without account-existence clues. Refresh affected request/friend lists and counts after successful actions.
 - [x] Make controls accessible by name for both usability and system tests.
 
 
