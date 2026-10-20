@@ -597,6 +597,58 @@ class FriendshipsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "database uniqueness conflict recovers a crossed request without sending a duplicate notification" do
+    # Simulate a competing pair appearing after the first SELECT, followed by
+    # a database uniqueness failure. Separate model tests exercise the real index.
+    inserted = false
+    subscriber = lambda do |*, payload|
+      if !inserted && payload[:sql].start_with?("SELECT") && payload[:sql].include?('"friendships"')
+        inserted = true
+
+        create_friendship(requester: @recipient, recipient: @requester)
+      end
+    end
+    requester_id = @requester.id
+    recipient_id = @recipient.id
+    conflict = lambda do |friendship|
+      if friendship.requester_id == requester_id && friendship.recipient_id == recipient_id
+        raise ActiveRecord::RecordNotUnique
+      end
+    end
+
+    Friendship.set_callback(:validation, :before, conflict)
+
+    begin
+      assert_no_enqueued_jobs do
+        ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+          post friendships_path, params: { friendship: { email: @recipient.email } }
+        end
+      end
+
+      assert inserted
+      assert_redirected_to requests_friendships_path
+      assert_equal 1, Friendship.count
+      assert_equal @recipient.id, Friendship.sole.requester_id
+      assert_nil Friendship.sole.accepted_at
+    ensure
+      Friendship.skip_callback(:validation, :before, conflict)
+    end
+  end
+
+  test "acceptance notification waits for the enclosing transaction to commit" do
+    friendship = create_friendship
+    switch_user(@recipient)
+
+    assert_enqueued_jobs 1, only: FriendshipAcceptanceNotificationJob do
+      Friendship.transaction do
+        assert_no_enqueued_jobs do
+          patch accept_friendship_path(friendship)
+        end
+      end
+    end
+    assert friendship.reload.accepted_at.present?
+  end
+
   private
 
   def switch_user(user)

@@ -1,6 +1,9 @@
 require "application_system_test_case"
 
 class FriendshipsTest < ApplicationSystemTestCase
+  include ActiveJob::TestHelper
+  include ActionMailer::TestHelper
+
   setup do
     @requester = users(:sean)
     @recipient = users(:casie)
@@ -10,6 +13,10 @@ class FriendshipsTest < ApplicationSystemTestCase
   end
 
   test "request acceptance browsing and removal work through the interface" do
+    recipient_list = @recipient.lists.create!(name: "Birthday wishes", description: "")
+
+    lists(:birthday_list).update!(public: false)
+
     visit friends_path
 
     fill_in "Friend's email address", with: @recipient.email
@@ -37,7 +44,21 @@ class FriendshipsTest < ApplicationSystemTestCase
 
     assert_current_path friend_lists_path(@requester)
     assert_text "Christmas List"
+    assert_no_text "Birthday List"
 
+    switch_user(@requester)
+
+    visit friends_path
+
+    click_link @recipient.username
+
+    assert_current_path friend_lists_path(@recipient)
+
+    click_link recipient_list.name
+
+    assert_current_path friend_list_path(@recipient, recipient_list)
+
+    switch_user(@recipient)
     visit friends_path
 
     accept_confirm do
@@ -47,6 +68,10 @@ class FriendshipsTest < ApplicationSystemTestCase
     assert_text "You have no friends yet."
     assert_empty @recipient.friends
     assert_empty @requester.friends
+
+    visit friend_list_path(@requester, lists(:christmas_list))
+
+    assert_no_selector "#list-items"
   end
 
   test "crossed requests require acceptance and may be declined" do
@@ -146,6 +171,57 @@ class FriendshipsTest < ApplicationSystemTestCase
     assert_current_path friends_path
     assert_field "Friend's email address", with: "draft@example.com"
     assert_empty @requester.friends
+  end
+
+  test "request and acceptance email links complete the two-user workflow" do
+    list = @recipient.lists.create!(name: "Birthday wishes", description: "")
+
+    assert_emails 1 do
+      perform_enqueued_jobs(only: FriendshipRequestNotificationJob) do
+        visit friends_path
+
+        fill_in "Friend's email address", with: @recipient.email
+
+        click_button "Send friend request"
+
+        assert_text I18n.t("friendships.create.success")
+      end
+    end
+
+    request_email = ActionMailer::Base.deliveries.last
+
+    assert_equal [ @recipient.email ], request_email.to
+
+    request_link = Nokogiri::HTML(request_email.html_part.body.decoded).at_css("a[href*='/friendships/requests']")["href"]
+
+    switch_user(@recipient)
+
+    visit URI.parse(request_link).request_uri
+
+    assert_emails 1 do
+      perform_enqueued_jobs(only: FriendshipAcceptanceNotificationJob) do
+        click_button "Accept #{@requester.username}"
+
+        assert_text "Friend request accepted."
+      end
+    end
+
+    acceptance_email = ActionMailer::Base.deliveries.last
+
+    assert_equal [ @requester.email ], acceptance_email.to
+
+    acceptance_link = Nokogiri::HTML(acceptance_email.html_part.body.decoded).at_css("a[href*='/friends/']")["href"]
+
+
+    switch_user(@requester)
+
+    visit URI.parse(acceptance_link).request_uri
+
+    assert_current_path friend_lists_path(@recipient)
+
+    click_link list.name
+
+    assert_current_path friend_list_path(@recipient, list)
   end
 
   private

@@ -57,18 +57,29 @@ class UserTest < ActiveSupport::TestCase
     assert_empty @outgoing_friend.friends
   end
 
-  test "deleting a user removes incoming and outgoing friendships in either state" do
-    pending = Friendship.create!(requester: @outgoing_friend, recipient: @user)
-    accepted = connect(@user, @incoming_friend)
+  [ true, false ].each do |outgoing_accepted|
+    test "deleting a user removes both directions when outgoing acceptance is #{outgoing_accepted}" do
+      outgoing_attributes = { requester: @user, recipient: @outgoing_friend }
+      incoming_attributes = { requester: @incoming_friend, recipient: @user }
 
-    assert_difference "Friendship.count", -2 do
-      @user.destroy!
+      if outgoing_accepted
+        outgoing_attributes[:accepted_at] = Time.current
+      else
+        incoming_attributes[:accepted_at] = Time.current
+      end
+
+      outgoing = Friendship.create!(outgoing_attributes)
+      incoming = Friendship.create!(incoming_attributes)
+
+      assert_difference "Friendship.count", -2 do
+        @user.destroy!
+      end
+
+      assert_not Friendship.exists?(outgoing.id)
+      assert_not Friendship.exists?(incoming.id)
+      assert User.exists?(@outgoing_friend.id)
+      assert User.exists?(@incoming_friend.id)
     end
-
-    assert_not Friendship.exists?(pending.id)
-    assert_not Friendship.exists?(accepted.id)
-    assert User.exists?(@outgoing_friend.id)
-    assert User.exists?(@incoming_friend.id)
   end
 
   test "a user without friendships has no friends" do

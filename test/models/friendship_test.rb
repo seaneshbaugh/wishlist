@@ -78,12 +78,13 @@ class FriendshipTest < ActiveSupport::TestCase
   end
 
   test "database rejects self friendship without model validation" do
-    assert_raises ActiveRecord::StatementInvalid do
+    error = assert_raises ActiveRecord::StatementInvalid do
       Friendship.transaction(requires_new: true) do
         Friendship.insert_all!([ { requester_id: @requester.id, recipient_id: @requester.id } ])
       end
     end
 
+    assert_kind_of PG::CheckViolation, error.cause
     assert_empty Friendship.all
   end
 

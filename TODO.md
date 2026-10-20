@@ -102,13 +102,15 @@ Friendship forms use targeted Turbo Stream responses with HTML redirect fallback
 
 ### 6. Tests and beta verification
 
-- [ ] Model tests: both association directions, pending versus accepted friends, self-friendship, unordered-pair uniqueness at the database level, participant deletion, and chainable friend queries. Exercise duplicate/crossed-request handling without relying only on a validation uniqueness check.
-- [ ] Request tests: authentication, generic responses for unknown/known emails, normalized email lookup, confirmed-email boundaries, self/duplicate/crossed requests, recipient-only acceptance/decline, participant-only removal, guessed IDs, and repeated acceptance/notification behavior.
-- [ ] Access tests: accepted friends versus pending/unrelated/former friends, private lists, direct user/list/purchase routes, and historical purchases after friendship removal. Update existing fixtures/setup to explicitly establish friendships where access is intended.
-- [ ] Query regression tests: friends index list counts remain constant-query as friends are added; include zero-list friends and private lists.
-- [ ] Mail/job tests: recipients, content, authenticated links, enqueue timing, no duplicate/failure notifications, and deleted/resolved records before delivery.
-- [ ] System tests: send request, recipient accepts, both can browse friends-visible lists, recipient declines, crossed request requires acceptance, and removal revokes access. Verify generic unknown-email feedback and absence of outgoing/account-discovery UI.
-- [ ] Retain existing purchase/list workflows and browser login coverage; run the full suite and manually verify the two-user email flow in Mailpit before beta.
+- [x] Model tests: both association directions, pending versus accepted friends, self-friendship, unordered-pair uniqueness at the database level, participant deletion, and chainable friend queries. Exercise duplicate/crossed-request handling with database constraint tests and deterministic race-recovery tests. These are not simultaneous-connection stress tests.
+- [x] Request tests: authentication, generic responses for unknown/known emails, normalized email lookup, confirmed-email boundaries, self/duplicate/crossed requests, recipient-only acceptance/decline, participant-only removal, guessed IDs, and repeated acceptance/notification behavior.
+- [x] Access tests: accepted friends versus pending/unrelated/former friends, private lists, direct user/list/purchase routes, and historical purchases after friendship removal. Update existing fixtures/setup to explicitly establish friendships where access is intended.
+- [x] Query regression tests: friends index list counts remain constant-query as friends are added; include zero-list friends and private lists.
+- [x] Mail/job tests: recipients, content, authenticated links, enqueue timing, no duplicate/failure notifications, and deleted/resolved records before delivery.
+- [x] System tests: send request, recipient accepts, both can browse friends-visible lists, recipient declines, crossed request requires acceptance, and removal revokes access. Verify generic unknown-email feedback and absence of outgoing/account-discovery UI.
+- [x] Retain existing purchase/list workflows and browser login coverage; run the full suite.
+- [x] Automate the complete two-user browser/email flow, including delivery through jobs and following request/acceptance email links. Local asynchronous delivery to Mailpit was verified in section 3.
+- [ ] Perform a final manual two-user browser/Mailpit walkthrough before beta; automated test-mail delivery does not replace this human acceptance check.
 
 ### Invitation follow-up (separate implementation)
 
