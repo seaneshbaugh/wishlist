@@ -66,16 +66,17 @@
 - [x] Scope decline to the current recipient's pending requests and removal to accepted friendships involving the current user. Unrelated users and guessed IDs get 404. Old links after decline/removal should fail cleanly.
 - [x] Handle database uniqueness races deliberately: reload the existing pair and apply the same duplicate/crossed-request rules rather than returning a server error or accepting implicitly.
 - [x] Prepare and render responses outside transactions; keep controller flow explicit.
-- [ ] Enqueue notifications only for successful new records/state transitions after commit (section 3; email jobs are not implemented yet).
+- [x] Enqueue notifications only for successful new records/state transitions after commit. All delivery occurs in background jobs.
 
 ### 3. Email notifications
 
-- [ ] Add friendship request and acceptance mailer actions with HTML/text templates and localized subjects/messages, following existing mail/job conventions.
-- [ ] New-request email goes to the recipient and identifies the requester. Acceptance email goes to the original requester and identifies the accepting friend. Do not include wishlist or purchase details.
-- [ ] Link request emails to authenticated incoming requests and acceptance emails to the friend's accessible lists. Links must require login as the appropriate user; forwarded email links grant no authority.
-- [ ] Enqueue once per actual request/acceptance transition. No email for unknown addresses, invalid/self requests, duplicate submissions, failed authorization, or declined requests.
-- [ ] Handle queued work gracefully when a friendship or user has been deleted; do not resurrect relationships or send actionable request messages for requests already resolved. A failed email must not undo a saved friendship transition.
-- [ ] Verify delivery through Mailpit and ensure the deployed worker processes the notification queue.
+- [x] Add friendship request and acceptance mailer actions with HTML/text templates and localized subjects/messages, following existing mail/job conventions.
+- [x] New-request email goes to the recipient and identifies the requester. Acceptance email goes to the original requester and identifies the accepting friend. Do not include wishlist or purchase details.
+- [x] Link request emails to authenticated incoming requests and acceptance emails to the friend's accessible lists. Links must require login as the appropriate user; forwarded email links grant no authority.
+- [x] Enqueue once per actual request/acceptance transition. No email for unknown addresses, invalid/self requests, duplicate submissions, failed authorization, or declined requests.
+- [x] Handle queued work gracefully when a friendship or user has been deleted; do not resurrect relationships or send actionable request messages for requests already resolved. A failed email must not undo a saved friendship transition.
+- [x] Verify request and acceptance delivery through background jobs to local Mailpit. Production worker configuration consumes the `friendship_notification` queue via its existing `queues: "*"` setting; deployment instructions are in README.md.
+- [ ] At deployment, verify a live production worker and SMTP/URL/sender configuration on the target host (hosting work; no production environment exists yet).
 
 ### 4. Apply access rules throughout the application
 

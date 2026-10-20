@@ -1,0 +1,6 @@
+en:
+  friendship_mailer:
+    request_message:
+      subject: "%{username} sent you a friend request on Wishlist."
+    acceptance_message:
+      subject: "%{username} accepted your friend request on Wishlist."

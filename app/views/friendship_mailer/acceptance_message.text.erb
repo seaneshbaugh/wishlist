@@ -1,0 +1,9 @@
+<%= t(".heading") %>
+
+<%= t(".greeting", username: @requester.username) %>
+
+<%= t(".body", username: @recipient.username) %>
+
+<%= t(".link") %>: <%= friend_lists_url(@recipient) %>
+
+<%= t(".instructions") %>

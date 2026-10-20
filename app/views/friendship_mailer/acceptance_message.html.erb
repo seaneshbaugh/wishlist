@@ -1,0 +1,5 @@
+<h1><%= t(".heading") %></h1>
+<p><%= t(".greeting", username: @requester.username) %></p>
+<p><%= t(".body", username: @recipient.username) %></p>
+<p><%= link_to t(".link"), friend_lists_url(@recipient) %></p>
+<p><%= t(".instructions") %></p>

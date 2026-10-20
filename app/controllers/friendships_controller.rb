@@ -28,6 +28,12 @@ class FriendshipsController < ApplicationController
 
     friendship = find_or_request_friendship(recipient) if recipient
 
+    if friendship&.previously_new_record?
+      ActiveRecord.after_all_transactions_commit do
+        FriendshipRequestNotificationJob.perform_later(friendship.id)
+      end
+    end
+
     if friendship&.accepted_at.present?
       flash[:notice] = t(".already_friends")
 
@@ -50,6 +56,10 @@ class FriendshipsController < ApplicationController
       raise ActiveRecord::RecordNotFound if friendship.accepted_at.present?
 
       friendship.update!(accepted_at: Time.current)
+    end
+
+    ActiveRecord.after_all_transactions_commit do
+      FriendshipAcceptanceNotificationJob.perform_later(friendship.id)
     end
 
     flash[:success] = t(".success")

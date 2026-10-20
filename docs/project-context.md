@@ -1,6 +1,6 @@
 # Project context
 
-Imported from the previous ChatGPT conversation; updated through friendship lifecycle implementation on 2026-10-19. The code and TODO.md are the source of truth.
+Imported from the previous ChatGPT conversation; updated through friendship email notifications on 2026-10-20. The code and TODO.md are the source of truth.
 
 ## Purpose and limits
 
@@ -32,7 +32,7 @@ The original review findings are fixed and covered by model, request, and browse
 
 Friendship has requester/recipient users and nullable accepted_at, with a database check against self-friendship and an unordered-pair unique index. User#friends is a chainable relation covering accepted friendships in either direction. Existing users are never connected automatically; tests create relationships explicitly.
 
-The request lifecycle and basic pages are implemented: normalized confirmed-email lookup, generic responses for unknown/new/duplicate outgoing requests, explicit acceptance for crossed requests, recipient-only acceptance/decline, and either-party removal. No outgoing-request list, user directory, or automatic crossed-request acceptance. Email notifications are the next section of TODO.md and are not yet implemented. Current friendship forms use Turbo-followed redirects; dedicated stream updates remain future work.
+The request lifecycle and basic pages are implemented: normalized confirmed-email lookup, generic responses for unknown/new/duplicate outgoing requests, explicit acceptance for crossed requests, recipient-only acceptance/decline, and either-party removal. No outgoing-request list, user directory, or automatic crossed-request acceptance. Request and acceptance emails enqueue after commit from FriendshipsController and deliver only inside dedicated background jobs on the friendship_notification queue. Jobs take a friendship ID and skip deleted or inapplicable records. Duplicate outgoing requests and repeated acceptance do not enqueue extra notifications. Local async-job delivery to Mailpit is verified; production worker verification remains hosting work. Current friendship forms use Turbo-followed redirects; dedicated stream updates remain future work.
 
 FriendsController#index uses /friends. FriendshipsController handles POST /friendships, GET /friendships/requests, PATCH /friendships/:id/accept, and DELETE /friendships/:id. Nested list/purchase routes use /friends/:friend_id/lists with accepted-friend lookup. Old /users routes are removed; /friends/your-own-name and profile pages are intentionally unavailable. Owners use /lists and DELETE /lists/:list_id/purchases/:id for revealed purchases, including on private lists.
 

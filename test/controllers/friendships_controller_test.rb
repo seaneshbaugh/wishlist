@@ -1,6 +1,9 @@
 require "test_helper"
 
 class FriendshipsControllerTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+  include ActionMailer::TestHelper
+
   setup do
     @requester = users(:sean)
     @recipient = users(:casie)
@@ -361,6 +364,153 @@ class FriendshipsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_nil purchase.reload.notes
+  end
+
+  test "request notification is queued once and no email is delivered in the request" do
+    assert_no_emails do
+      assert_enqueued_jobs 1, only: FriendshipRequestNotificationJob do
+        post friendships_path, params: { friendship: { email: @recipient.email } }
+      end
+    end
+
+    friendship = Friendship.sole
+
+    assert_enqueued_with job: FriendshipRequestNotificationJob, args: [ friendship.id ], queue: "friendship_notification"
+
+    assert_no_enqueued_jobs do
+      post friendships_path, params: { friendship: { email: @recipient.email } }
+    end
+  end
+
+  test "acceptance notification is queued once and sent only by the job" do
+    friendship = create_friendship
+
+    switch_user(@recipient)
+
+    assert_no_emails do
+      assert_enqueued_with job: FriendshipAcceptanceNotificationJob, args: [ friendship.id ] do
+        patch accept_friendship_path(friendship)
+      end
+    end
+
+    assert_no_enqueued_jobs do
+      patch accept_friendship_path(friendship)
+
+      assert_response :not_found
+    end
+
+    assert_emails 1 do
+      perform_enqueued_jobs(only: FriendshipAcceptanceNotificationJob)
+    end
+
+    assert_equal [ @requester.email ], ActionMailer::Base.deliveries.last.to
+  end
+
+  test "unknown unconfirmed invalid and self requests do not queue notifications" do
+    @recipient.update_columns(confirmed_at: nil)
+
+    [ "unknown@example.com", @recipient.email, "invalid", @requester.email ].each do |email|
+      assert_no_enqueued_jobs do
+        post friendships_path, params: { friendship: { email: email } }
+      end
+    end
+  end
+
+  test "crossed and already accepted requests do not queue notifications" do
+    friendship = create_friendship(requester: @recipient, recipient: @requester)
+
+    assert_no_enqueued_jobs do
+      post friendships_path, params: { friendship: { email: @recipient.email } }
+    end
+
+    friendship.update!(accepted_at: Time.current)
+
+    assert_no_enqueued_jobs do
+      post friendships_path, params: { friendship: { email: @recipient.email } }
+    end
+  end
+
+  test "decline removal and failed authorization do not queue notifications" do
+    friendship = create_friendship
+
+    switch_user(@stranger)
+
+    assert_no_enqueued_jobs do
+      patch accept_friendship_path(friendship)
+
+      assert_response :not_found
+    end
+
+    switch_user(@recipient)
+
+    assert_no_enqueued_jobs do
+      delete friendship_path(friendship)
+    end
+
+    friendship = create_friendship(accepted_at: Time.current)
+
+    assert_no_enqueued_jobs do
+      delete friendship_path(friendship)
+    end
+  end
+
+  test "request notification waits for the enclosing transaction to commit" do
+    assert_enqueued_jobs 1, only: FriendshipRequestNotificationJob do
+      Friendship.transaction do
+        assert_no_enqueued_jobs do
+          post friendships_path, params: { friendship: { email: @recipient.email } }
+        end
+      end
+    end
+  end
+
+  test "rolled back request does not enqueue a notification" do
+    assert_no_enqueued_jobs do
+      Friendship.transaction do
+        post friendships_path, params: { friendship: { email: @recipient.email } }
+
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    assert_empty Friendship.all
+  end
+
+  test "rolled back acceptance does not enqueue a notification" do
+    friendship = create_friendship
+
+    switch_user(@recipient)
+
+    assert_no_enqueued_jobs do
+      Friendship.transaction do
+        patch accept_friendship_path(friendship)
+
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    assert_nil friendship.reload.accepted_at
+  end
+
+  test "email links require login and cannot grant access to unrelated accounts" do
+    friendship = create_friendship(accepted_at: Time.current)
+
+    switch_user(@stranger)
+
+    get friend_lists_path(@recipient)
+
+    assert_response :not_found
+
+    sign_out @stranger
+
+    get requests_friendships_path
+
+    assert_response :not_found
+
+    get friend_lists_path(@recipient)
+
+    assert_response :not_found
+    assert friendship.reload.accepted_at.present?
   end
 
   private

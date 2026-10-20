@@ -1,0 +1,14 @@
+en:
+  friendship_mailer:
+    request_message:
+      heading: "New friend request"
+      greeting: "Hello %{username},"
+      body: "%{username} would like to be your friend on Wishlist. Accepting lets you see each other's friends-visible lists."
+      link: "Review your friend requests"
+      instructions: "Sign in to your account to accept or decline. Opening this link does not accept the request. If you don't recognize the sender, you can decline it."
+    acceptance_message:
+      heading: "Friend request accepted"
+      greeting: "Hello %{username},"
+      body: "%{username} accepted your friend request on Wishlist. You can now see each other's friends-visible lists."
+      link: "View your friend's lists"
+      instructions: "Sign in to your account to view their lists."
