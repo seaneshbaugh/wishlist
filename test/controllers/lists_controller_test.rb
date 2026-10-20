@@ -6,6 +6,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     @viewer = users(:casie)
     @list = lists(:christmas_list)
     @item = list_items(:football)
+    Friendship.create!(requester: @owner, recipient: @viewer, accepted_at: Time.current)
     confirm_and_sign_in @owner
   end
 
@@ -82,17 +83,17 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     private_list = lists(:birthday_list)
     private_list.update!(public: false)
 
-    get user_lists_path(@owner)
+    get friend_lists_path(@owner)
 
     assert_response :success
     assert_select "h2", text: @list.name
     assert_select "h2", text: private_list.name, count: 0
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :success
 
-    get user_list_path(@owner, private_list)
+    get friend_list_path(@owner, private_list)
 
     assert_response :not_found
   end
@@ -106,9 +107,9 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select item_selector, count: 1
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
-    assert_response :success
+    assert_response :not_found
   end
 
   test "hidden items and items fulfilled by someone else are omitted" do
@@ -116,7 +117,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
 
     @item.update!(visible: false)
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :success
     assert_select item_selector, count: 0
@@ -124,7 +125,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     @item.update!(visible: true)
     @item.purchases.create!(user: users(:amelia), quantity: 1, reveal_at: 1.day.ago)
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :success
     assert_select item_selector, count: 0
@@ -135,21 +136,21 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
 
     @item.purchases.create!(user: @viewer, quantity: 1, reveal_at: 1.day.ago)
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :success
     assert_select item_selector, count: 1
 
     @item.update!(visible: false)
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :success
     assert_select item_selector, count: 0
 
     @list.update!(public: false)
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :not_found
   end
@@ -186,7 +187,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
   test "list lookup rejects a different route owner" do
     switch_user @viewer
 
-    get user_list_path(users(:amelia), @list)
+    get friend_list_path(users(:amelia), @list)
 
     assert_response :not_found
   end
@@ -194,7 +195,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
   test "anonymous visitors cannot access lists or mutate them" do
     sign_out @owner
 
-    get user_list_path(@owner, @list)
+    get friend_list_path(@owner, @list)
 
     assert_response :not_found
 
@@ -244,7 +245,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
 
     switch_user @viewer
 
-    get user_lists_path(@owner)
+    get friend_lists_path(@owner)
 
     assert_response :success
     assert_select "[data-reorder-target='item'][data-id='#{@list.id}'] span", text: "1 item", count: 1
@@ -260,16 +261,16 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
 
     switch_user @viewer
 
-    get user_lists_path(@owner)
+    get friend_lists_path(@owner)
 
-    viewer_before = index_select_count(user_lists_path(@owner))
+    viewer_before = index_select_count(friend_lists_path(@owner))
 
     4.times do |number|
       list = @owner.lists.create!(name: "Extra wishlist #{number}", description: "")
       list.list_items.create!(name: "Extra item")
     end
 
-    assert_equal viewer_before, index_select_count(user_lists_path(@owner))
+    assert_equal viewer_before, index_select_count(friend_lists_path(@owner))
 
     switch_user @owner
 

@@ -8,6 +8,8 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     @list = lists(:christmas_list)
     @item = list_items(:paint_brush)
     @reveal_at = 1.month.from_now.change(sec: 0)
+    Friendship.create!(requester: @owner, recipient: @purchaser, accepted_at: Time.current)
+    Friendship.create!(requester: @owner, recipient: @stranger, accepted_at: Time.current)
     confirm_and_sign_in @purchaser
   end
 
@@ -107,13 +109,13 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     purchase = existing_purchase
 
     assert_no_difference "Purchase.count" do
-      patch user_list_purchase_path(@owner, lists(:birthday_list), purchase), params: { purchase: { notes: "Wrong list" } }
+      patch friend_list_purchase_path(@owner, lists(:birthday_list), purchase), params: { purchase: { notes: "Wrong list" } }
 
       assert_response :not_found
 
       confirm_and_sign_in @purchaser
 
-      delete user_list_purchase_path(@stranger, @list, purchase)
+      delete friend_list_purchase_path(@stranger, @list, purchase)
 
       assert_response :not_found
     end
@@ -211,7 +213,7 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     confirm_and_sign_in @owner
 
     assert_difference "Purchase.count", -1 do
-      delete purchase_path(purchase), as: :turbo_stream
+      delete list_purchase_path(@list, purchase), as: :turbo_stream
 
       assert_response :success
     end
@@ -229,7 +231,7 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
 
       confirm_and_sign_in @owner
 
-      delete purchase_path(purchase), as: :turbo_stream
+      delete list_purchase_path(@list, purchase), as: :turbo_stream
 
       assert_response :success
 
@@ -358,21 +360,41 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     change = -> { Purchase.where(id: purchase.id).update_all(reveal_at: 1.day.from_now) }
 
     after_item_lock(change) do
-      delete purchase_path(purchase), as: :turbo_stream
+      delete list_purchase_path(@list, purchase), as: :turbo_stream
     end
 
     assert_response :not_found
     assert Purchase.exists?(purchase.id)
   end
 
+  test "owner purchase deletion route rejects unrevealed purchases and foreign lists" do
+    purchase = existing_purchase
+
+    confirm_and_sign_in @owner
+
+    assert_no_difference "Purchase.count" do
+      delete list_purchase_path(@list, purchase)
+
+      assert_response :not_found
+    end
+
+    confirm_and_sign_in @stranger
+
+    assert_no_difference "Purchase.count" do
+      delete list_purchase_path(@list, purchase)
+
+      assert_response :not_found
+    end
+  end
+
   private
 
   def purchase_path(purchase)
-    user_list_purchase_path(@owner, @list, purchase)
+    friend_list_purchase_path(@owner, @list, purchase)
   end
 
   def create_request(**attributes)
-    post user_list_purchases_path(@owner, @list), params: {
+    post friend_list_purchases_path(@owner, @list), params: {
       purchase: { list_item_id: @item.id, quantity: 1, reveal_at: @reveal_at }.merge(attributes)
     }, as: :turbo_stream
   end

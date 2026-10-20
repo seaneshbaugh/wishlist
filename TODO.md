@@ -52,20 +52,21 @@
 - [x] Add database and model checks preventing self-friendship. Add a unique expression index on `LEAST(requester_id, recipient_id), GREATEST(requester_id, recipient_id)` to prohibit duplicate pairs in either direction, including simultaneous crossed requests.
 - [x] Index participant lookups and add explicit `requester`/`recipient` associations. Ensure deleting either user removes their pending and accepted friendship rows without deleting the other user.
 - [x] Add incoming/outgoing association names, pending/accepted scopes, and a `User#friends` relation covering either side of accepted friendships. Keep it chainable for ordering and grouped list counts. Do not create reciprocal rows or a separate request model.
-- [ ] Keep participants immutable through controller parameters. Acceptance only changes `accepted_at`; removal/decline deletes the row. (Enforced when controllers are added in section 2.)
+- [x] Keep participants immutable through controller parameters. Acceptance only changes `accepted_at`; removal/decline deletes the row.
 
 
 ### 2. Request lifecycle and authorization
 
-- [ ] Add authenticated friendship index, create, incoming-requests page, accept, and destroy actions, using explicit conventional controller branches.
-- [ ] Create accepts only an email address: requester is `current_user`; resolve recipient using Devise-compatible trimming/case normalization and their current confirmed email. Do not match a pending `unconfirmed_email` or create requests for unconfirmed accounts.
-- [ ] For unknown emails and newly sent requests, return the same generic response, e.g. "If that email belongs to an eligible account, a friend request will be sent." Return the same response for repeated outgoing requests; do not expose recipient identifiers or conditionally reveal an outgoing record in HTML/Turbo responses.
-- [ ] Handle self-requests and already accepted friendships deliberately without creating records or emails. Information about the current user or an existing friend may be shown without exposing a new account.
-- [ ] On crossed requests, link to the existing incoming request. Opening the link is read-only; acceptance uses a button submitting PATCH, never a GET that changes state.
-- [ ] Scope acceptance to the current recipient's pending requests. Lock the friendship and check its state before transitioning so concurrent/repeated acceptance cannot send duplicate notifications.
-- [ ] Scope decline to the current recipient's pending requests and removal to accepted friendships involving the current user. Unrelated users and guessed IDs get 404. Old links after decline/removal should fail cleanly.
-- [ ] Handle database uniqueness races deliberately: reload the existing pair and apply the same duplicate/crossed-request rules rather than returning a server error or accepting implicitly.
-- [ ] Prepare and render responses outside transactions. Enqueue notifications only for successful new records/state transitions after commit; avoid generic responder/service abstractions unless actual complexity warrants them.
+- [x] Add authenticated FriendsController index and FriendshipsController create, incoming-requests, accept, and destroy actions. Use `/friends` for accepted friends, `/friends/:friend_id/lists` for browsing, and friendship IDs for relationship actions. No self friend URLs or profile route yet; owner purchase deletion uses `/lists/:list_id/purchases/:id`.
+- [x] Create accepts only an email address: requester is `current_user`; resolve recipient using Devise-compatible trimming/case normalization and their current confirmed email. Do not match a pending `unconfirmed_email` or create requests for unconfirmed accounts.
+- [x] For unknown emails and newly sent requests, return the same generic response, e.g. "If that email belongs to an eligible account, a friend request will be sent." Return the same response for repeated outgoing requests; do not expose recipient identifiers or conditionally reveal an outgoing record in HTML/Turbo responses.
+- [x] Handle self-requests and already accepted friendships deliberately without creating records or emails. Information about the current user or an existing friend may be shown without exposing a new account.
+- [x] On crossed requests, link to the existing incoming request. Opening the link is read-only; acceptance uses a button submitting PATCH, never a GET that changes state.
+- [x] Scope acceptance to the current recipient's pending requests. Lock the friendship and check its state before transitioning so concurrent/repeated acceptance cannot send duplicate notifications.
+- [x] Scope decline to the current recipient's pending requests and removal to accepted friendships involving the current user. Unrelated users and guessed IDs get 404. Old links after decline/removal should fail cleanly.
+- [x] Handle database uniqueness races deliberately: reload the existing pair and apply the same duplicate/crossed-request rules rather than returning a server error or accepting implicitly.
+- [x] Prepare and render responses outside transactions; keep controller flow explicit.
+- [ ] Enqueue notifications only for successful new records/state transitions after commit (section 3; email jobs are not implemented yet).
 
 ### 3. Email notifications
 
@@ -78,22 +79,25 @@
 
 ### 4. Apply access rules throughout the application
 
-- [ ] Keep list access encapsulated in the existing lookup scopes: self sees own lists; accepted friends see friends-visible lists; pending users, former friends, and unrelated users receive 404 for direct access.
-- [ ] Restrict user lookup itself for user/list/purchase routes to self or accepted friends, so unknown and inaccessible usernames do not produce distinguishable application responses.
-- [ ] Remove the global users index route/action and replace navbar links with Friends. Remove unused standalone user profile routes/actions if they serve no remaining purpose; preserve nested user/list URLs with scoped access checks.
-- [ ] Apply the same parent-access rule to list indexes, list show, and purchase create/update/delete. Historical purchase-based item visibility never overrides missing friendship or a private list. Existing purchase operation predicates remain unchanged once parent access succeeds.
-- [ ] Retain the current item visibility rules within an accessible list, including owner visibility, hidden items, fulfillment, and historical purchaser visibility. Retain grouped visible-item counts.
+- [x] Keep list access encapsulated in the existing lookup scopes: self sees own lists; accepted friends see friends-visible lists; pending users, former friends, and unrelated users receive 404 for direct access.
+- [x] Restrict user lookup itself for user/list/purchase routes to self or accepted friends, so unknown and inaccessible usernames do not produce distinguishable application responses.
+- [x] Remove the global users index route/action and replace navbar links with Friends. Remove unused standalone user profile routes/actions if they serve no remaining purpose; replace nested user/list URLs with friend/list URLs and scoped access checks.
+- [x] Apply the same parent-access rule to list indexes, list show, and purchase create/update/delete. Historical purchase-based item visibility never overrides missing friendship or a private list. Existing purchase operation predicates remain unchanged once parent access succeeds.
+- [x] Retain the current item visibility rules within an accessible list, including owner visibility, hidden items, fulfillment, and historical purchaser visibility. Retain grouped visible-item counts.
 - [ ] Relabel Public as Friends and explain the distinction from Private in list forms/status text. Keep the existing boolean storage for this feature unless a concrete need for migration emerges.
-- [ ] Do not create default friendships between existing users or silently expose lists as part of deployment. Users establish relationships through the new flow.
+- [x] Do not create default friendships between existing users or silently expose lists as part of deployment. Users establish relationships through the new flow.
+
 
 ### 5. UI and Turbo behavior
 
-- [ ] Friends index: alphabetized accepted friends, including friends with zero visible lists; grouped count of friends-visible lists; link each friend directly to their lists; clear empty state.
-- [ ] Add the email request form and a link to the incoming-requests page. Do not add user search, suggestions, mutual-friend counts, or outgoing requests.
-- [ ] Incoming requests page: recognizable sender, Accept and Decline controls, and an empty state. Crossed-request responses link here or present the same explicitly authorized acceptance control.
-- [ ] Add friendship removal with a clear Turbo confirmation explaining that both people lose access to each other's lists and purchases. Use ordinary confirmation rather than typed-email confirmation for beta.
+Basic pages are functional with Turbo-followed redirects; dedicated Turbo Stream updates and further presentation work remain below.
+- [x] Friends index: alphabetized accepted friends, including friends with zero visible lists; grouped count of friends-visible lists; link each friend directly to their lists; clear empty state.
+- [x] Add the email request form and a link to the incoming-requests page. Do not add user search, suggestions, mutual-friend counts, or outgoing requests.
+- [x] Incoming requests page: recognizable sender, Accept and Decline controls, and an empty state. Crossed-request responses link here or present the same explicitly authorized acceptance control.
+- [x] Add friendship removal with a clear Turbo confirmation explaining that both people lose access to each other's lists and purchases. Use ordinary confirmation rather than typed-email confirmation for beta.
 - [ ] Use `form_with`, Turbo Stream templates, and existing notifications. Preserve submitted email on validation errors and provide consistent generic success feedback without account-existence clues. Refresh affected request/friend lists and counts after successful actions.
-- [ ] Make controls accessible by name for both usability and system tests.
+- [x] Make controls accessible by name for both usability and system tests.
+
 
 ### 6. Tests and beta verification
 

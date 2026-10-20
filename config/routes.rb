@@ -47,11 +47,22 @@ Rails.application.routes.draw do
             patch "reorder" => "list_items#reorder", as: :reorder, constraints: ->(request) { request.format.json? }
           end
         end
+
+        resources :purchases, only: :destroy
       end
 
-      resources :users, only: %i[index show] do
+      resources :friends, only: :index do
         resources :lists, only: %i[index show] do
           resources :purchases, only: %i[create update destroy]
+        end
+      end
+
+      resources :friendships, only: %i[create destroy] do
+        collection do
+          get :requests
+        end
+        member do
+          patch :accept
         end
       end
 

@@ -8,7 +8,8 @@ class PurchasesTest < ApplicationSystemTestCase
     @list = lists(:christmas_list)
     @item = list_items(:paint_brush)
     @reveal_at = 1.month.from_now.change(sec: 0)
-
+    Friendship.create!(requester: @owner, recipient: @purchaser, accepted_at: Time.current)
+    Friendship.create!(requester: @owner, recipient: @other_viewer, accepted_at: Time.current)
     confirm_and_sign_in @purchaser
   end
 
@@ -355,7 +356,7 @@ class PurchasesTest < ApplicationSystemTestCase
   private
 
   def visit_list
-    visit user_list_path(@owner, @list)
+    visit (@viewing_as == @owner ? list_path(@list) : friend_list_path(@owner, @list))
   end
 
   def switch_user(user)
@@ -363,6 +364,7 @@ class PurchasesTest < ApplicationSystemTestCase
     sign_out @owner
     sign_out @other_viewer
     confirm_and_sign_in user
+    @viewing_as = user
     visit_list
   end
 

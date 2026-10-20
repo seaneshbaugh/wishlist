@@ -1,0 +1,13 @@
+en:
+  friendships:
+    create:
+      success: "If that email belongs to an eligible account, a friend request will be sent."
+      invalid_email: "Enter a valid email address."
+      self_request: "You can't send a friend request to yourself."
+      already_friends: "You're already friends."
+      incoming_request: "You already have an incoming friend request from %{username}. Accept it below."
+    accept:
+      success: "Friend request accepted."
+    destroy:
+      success: "Friendship or request removed."
+      error: "Unable to remove the friendship or request."

@@ -1,16 +1,16 @@
 # Project context
 
-Imported from the previous ChatGPT conversation and checked against the repository on 2026-10-10. The code is the source of truth; the previous handoff included unimplemented suggestions.
+Imported from the previous ChatGPT conversation; updated through friendship lifecycle implementation on 2026-10-19. The code and TODO.md are the source of truth.
 
 ## Purpose and limits
 
-A simple self-hosted wishlist for family and close friends. Authentication, JavaScript, and modern browsers are required. Public lists mean accessible to other authenticated users, not anonymous visitors. Friendship-based access is future work. Reasonable HTML fallbacks are useful; perfect no-JavaScript behavior is low priority. Hosting decisions wait until the family beta.
+A simple self-hosted wishlist for family and close friends. Authentication, JavaScript, and modern browsers are required. The public boolean now means visible to accepted friends, never anonymous visitors. Pending requests grant no access. The list UI label still needs changing from Public to Friends. Reasonable HTML fallbacks are useful; perfect no-JavaScript behavior is low priority. Hosting decisions wait until the family beta.
 
 ## Domain and authorization
 
 Users own lists and purchases. Lists have priority-ordered, manually positioned items. Purchases have quantities and reveal dates. Owners should not see purchases before reveal. Purchasers may edit/delete their own unrevealed purchases; list owners may delete revealed purchases. Private lists deny non-owner access, including purchase operations.
 
-Non-owners see visible items when quantity remains or they have any historical purchase for the item. Historical purchases deliberately preserve item visibility while the list remains accessible. Multiple historical purchases per user/item are allowed; at most one currently unrevealed purchase is intended. Do not add a unique user/item purchase index.
+Non-owners see visible items when quantity remains or they have any historical purchase for the item. Historical purchases deliberately preserve item visibility while the list remains accessible; removal of friendship revokes list and purchase access without deleting purchase history. Multiple historical purchases per user/item are allowed; at most one currently unrevealed purchase is intended. Do not add a unique user/item purchase index.
 
 Parent accessibility belongs in scoped controller lookups; purchase operation rules belong in model predicates. Purchase mutations lock the parent item to prevent simultaneous validations against the same remaining quantity. Responses render outside transactions.
 
@@ -26,6 +26,14 @@ The developer has extensive professional Rails experience (since 2006) and is le
 
 Docker Compose on both Fedora (ThinkPad) and Ubuntu/WSL. Rails runs in `web`, PostgreSQL in `db`, and remote Firefox in `selenium` under the `system-test` profile. Capybara serves on `web:3001`. Minitest is used; retain the real browser login test and full registration integration flow.
 
-On 2026-10-10, `docker compose exec -T web bundle exec rails test:all` passed: 21 tests, 63 assertions. RuboCop on models/controllers passed with no offenses. This is a baseline, not evidence of comprehensive authorization coverage.
+The original review findings are fixed and covered by model, request, and browser tests. Creation and reordering lock the relevant parent; purchase update/delete reload and reauthorize after locking the item. Index visible-item counts use a grouped query. Existing purchases can retain or decrease quantity after an owner lowers the requested amount.
 
-Already implemented relative to the handoff: `List#purchases` through-association, `unrevealed_purchase_for` use in views, one-unrevealed-purchase validation, optional reorder CSRF header, and Selenium profile. List-item reorder request coverage described in the handoff is absent from this checkout. The browser reorder test passes but still checks database state without polling.
+## Friendship progress and routes
+
+Friendship has requester/recipient users and nullable accepted_at, with a database check against self-friendship and an unordered-pair unique index. User#friends is a chainable relation covering accepted friendships in either direction. Existing users are never connected automatically; tests create relationships explicitly.
+
+The request lifecycle and basic pages are implemented: normalized confirmed-email lookup, generic responses for unknown/new/duplicate outgoing requests, explicit acceptance for crossed requests, recipient-only acceptance/decline, and either-party removal. No outgoing-request list, user directory, or automatic crossed-request acceptance. Email notifications are the next section of TODO.md and are not yet implemented. Current friendship forms use Turbo-followed redirects; dedicated stream updates remain future work.
+
+FriendsController#index uses /friends. FriendshipsController handles POST /friendships, GET /friendships/requests, PATCH /friendships/:id/accept, and DELETE /friendships/:id. Nested list/purchase routes use /friends/:friend_id/lists with accepted-friend lookup. Old /users routes are removed; /friends/your-own-name and profile pages are intentionally unavailable. Owners use /lists and DELETE /lists/:list_id/purchases/:id for revealed purchases, including on private lists.
+
+Invitation-only signup remains a separate feature. Accepting an invitation should establish friendship with the inviter, with explicit consent wording. See TODO.md for the full agreed plan and remaining work.

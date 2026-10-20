@@ -40,7 +40,7 @@
         data-id="<%= list.id %>"
         class="group border-b border-slate-200/70 last:border-b-0 transition-colors hover:bg-slate-50/60">
         <div class="flex items-center justify-between gap-8 px-8 py-6">
-          <%= link_to list.user == current_user ? list_path(list) : user_list_path(list.user, list), class: "min-w-0 flex-1" do %>
+          <%= link_to list.user == current_user ? list_path(list) : friend_list_path(list.user, list), class: "min-w-0 flex-1" do %>
             <h2 class="text-lg font-semibold tracking-tight text-slate-900">
               <%= list.name %>
             </h2>

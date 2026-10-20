@@ -28,7 +28,11 @@ class PurchasesController < ApplicationController
           render "purchases/update", locals: { message: t(".success") }, status: :created
         end
         format.html do
-          redirect_to user_list_url(@list.user, @list), status: :see_other
+          if @list.user == current_user
+            redirect_to list_url(@list), status: :see_other
+          else
+            redirect_to friend_list_url(@list.user, @list), status: :see_other
+          end
         end
       end
     else
@@ -75,7 +79,11 @@ class PurchasesController < ApplicationController
           render "purchases/update", locals: { message: t(".success") }
         end
         format.html do
-          redirect_to user_list_url(@list.user, @list), status: :see_other
+          if @list.user == current_user
+            redirect_to list_url(@list), status: :see_other
+          else
+            redirect_to friend_list_url(@list.user, @list), status: :see_other
+          end
         end
       end
     else
@@ -121,7 +129,11 @@ class PurchasesController < ApplicationController
           render "purchases/update", locals: { message: t(".success") }
         end
         format.html do
-          redirect_to user_list_url(@list.user, @list), status: :see_other
+          if @list.user == current_user
+            redirect_to list_url(@list), status: :see_other
+          else
+            redirect_to friend_list_url(@list.user, @list), status: :see_other
+          end
         end
       end
     else
@@ -141,7 +153,11 @@ class PurchasesController < ApplicationController
   end
 
   def owner
-    @owner ||= User.friendly.find(params[:user_id])
+    @owner ||= if params[:friend_id]
+      current_user.friends.friendly.find(params[:friend_id])
+    else
+      current_user
+    end
   end
   helper_method :owner
 

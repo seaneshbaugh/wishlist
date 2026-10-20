@@ -97,6 +97,7 @@ class FriendshipTest < ActiveSupport::TestCase
         end
       end
     end
+
     assert_equal [ friendship.id ], Friendship.ids
   end
 

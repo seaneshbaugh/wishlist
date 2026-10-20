@@ -99,8 +99,8 @@ class ListsController < ApplicationController
 
   def owner
     @owner ||= begin
-      if params[:user_id]
-        User.friendly.find(params[:user_id])
+      if params[:friend_id]
+        current_user.friends.friendly.find(params[:friend_id])
       else
         current_user
       end
