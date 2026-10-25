@@ -1,0 +1,21 @@
+en:
+  activerecord:
+    models:
+      invitation: "Invitation"
+    attributes:
+      invitation:
+        id: "ID"
+        inviter: "Inviter"
+        email: "Email"
+        invitee: "Invitee"
+        accepted_at: "Accepted At"
+        created_at: "Created At"
+        updated_at: "Updated At"
+    errors:
+      models:
+        invitation:
+          attributes:
+            email:
+              same_as_inviter: "can't be your own email address"
+            invitee:
+              same_as_inviter: "can't be the same as the inviter"

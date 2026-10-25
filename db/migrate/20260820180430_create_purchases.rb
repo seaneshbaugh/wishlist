@@ -9,6 +9,7 @@ class CreatePurchases < ActiveRecord::Migration[8.1]
       t.integer :quantity, null: false, default: 1
       t.datetime :reveal_at, null: false
       t.boolean :anonymous, null: false, default: false
+
       t.timestamps
     end
 

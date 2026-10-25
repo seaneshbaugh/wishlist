@@ -11,6 +11,10 @@ class User < ApplicationRecord
            dependent: :destroy, inverse_of: :requester
   has_many :incoming_friendships, class_name: "Friendship", foreign_key: :recipient_id,
            dependent: :destroy, inverse_of: :recipient
+  has_many :sent_invitations, class_name: "Invitation", foreign_key: :inviter_id,
+           dependent: :destroy, inverse_of: :inviter
+  has_many :accepted_invitations, class_name: "Invitation", foreign_key: :invitee_id,
+           dependent: :destroy, inverse_of: :invitee
 
   validates :username,
             format: { allow_blank: true, with: USERNAME_FORMAT },

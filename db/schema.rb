@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_143156) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,9 +20,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.string "slug", null: false
     t.integer "sluggable_id", null: false
     t.string "sluggable_type", limit: 50
-    t.index ["slug", "sluggable_type", "scope"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
-    t.index ["slug", "sluggable_type"], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
-    t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
+    t.index [ "slug", "sluggable_type", "scope" ], name: "index_friendly_id_slugs_on_slug_and_sluggable_type_and_scope", unique: true
+    t.index [ "slug", "sluggable_type" ], name: "index_friendly_id_slugs_on_slug_and_sluggable_type"
+    t.index [ "sluggable_type", "sluggable_id" ], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
   create_table "friendships", force: :cascade do |t|
@@ -32,9 +32,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.bigint "requester_id", null: false
     t.datetime "updated_at", null: false
     t.index "LEAST(requester_id, recipient_id), GREATEST(requester_id, recipient_id)", name: "index_friendships_on_user_pair", unique: true
-    t.index ["recipient_id"], name: "index_friendships_on_recipient_id"
-    t.index ["requester_id"], name: "index_friendships_on_requester_id"
+    t.index [ "recipient_id" ], name: "index_friendships_on_recipient_id"
+    t.index [ "requester_id" ], name: "index_friendships_on_requester_id"
     t.check_constraint "requester_id <> recipient_id", name: "friendships_different_users"
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.bigint "invitee_id"
+    t.bigint "inviter_id", null: false
+    t.datetime "updated_at", null: false
+    t.index "inviter_id, lower((email)::text)", name: "index_invitations_on_pending_inviter_email", unique: true, where: "(accepted_at IS NULL)"
+    t.index [ "invitee_id" ], name: "index_invitations_on_invitee_id"
+    t.index [ "inviter_id" ], name: "index_invitations_on_inviter_id"
+    t.check_constraint "(invitee_id IS NULL) = (accepted_at IS NULL)", name: "invitations_acceptance_consistent"
+    t.check_constraint "inviter_id <> invitee_id", name: "invitations_different_users"
   end
 
   create_table "list_items", force: :cascade do |t|
@@ -49,8 +63,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.datetime "updated_at", null: false
     t.string "url"
     t.boolean "visible", default: true, null: false
-    t.index ["list_id", "priority", "position"], name: "index_list_items_on_list_id_and_priority_and_position"
-    t.index ["list_id"], name: "index_list_items_on_list_id"
+    t.index [ "list_id", "priority", "position" ], name: "index_list_items_on_list_id_and_priority_and_position"
+    t.index [ "list_id" ], name: "index_list_items_on_list_id"
     t.check_constraint "\"position\" >= 0", name: "list_items_position_non_negative"
     t.check_constraint "price >= 0::numeric", name: "list_items_price_non_negative"
     t.check_constraint "priority >= 0 AND priority <= 4", name: "list_items_priority_valid"
@@ -67,8 +81,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index "user_id, lower((name)::text)", name: "index_lists_on_user_id_and_lower_name", unique: true
-    t.index ["user_id", "slug"], name: "index_lists_on_user_id_and_slug", unique: true
-    t.index ["user_id"], name: "index_lists_on_user_id"
+    t.index [ "user_id", "slug" ], name: "index_lists_on_user_id_and_slug", unique: true
+    t.index [ "user_id" ], name: "index_lists_on_user_id"
     t.check_constraint "\"position\" >= 0", name: "lists_position_non_negative"
   end
 
@@ -83,9 +97,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.datetime "reveal_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["list_item_id", "reveal_at"], name: "index_purchases_on_list_item_id_and_reveal_at"
-    t.index ["list_item_id"], name: "index_purchases_on_list_item_id"
-    t.index ["user_id"], name: "index_purchases_on_user_id"
+    t.index [ "list_item_id", "reveal_at" ], name: "index_purchases_on_list_item_id_and_reveal_at"
+    t.index [ "list_item_id" ], name: "index_purchases_on_list_item_id"
+    t.index [ "user_id" ], name: "index_purchases_on_user_id"
     t.check_constraint "price IS NULL OR price >= 0::numeric", name: "purchases_price_null_or_non_negative"
     t.check_constraint "quantity > 0", name: "purchases_quantity_positive"
   end
@@ -112,15 +126,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_023338) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index "lower((username)::text)", name: "index_users_on_lower_username", unique: true
-    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
-    t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
+    t.index [ "confirmation_token" ], name: "index_users_on_confirmation_token", unique: true
+    t.index [ "email" ], name: "index_users_on_email", unique: true
+    t.index [ "reset_password_token" ], name: "index_users_on_reset_password_token", unique: true
+    t.index [ "unlock_token" ], name: "index_users_on_unlock_token", unique: true
     t.check_constraint "username::text ~ '^[A-Za-z][A-Za-z0-9_]{3,31}$'::text", name: "users_username_format"
   end
 
   add_foreign_key "friendships", "users", column: "recipient_id"
   add_foreign_key "friendships", "users", column: "requester_id"
+  add_foreign_key "invitations", "users", column: "invitee_id"
+  add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "list_items", "lists"
   add_foreign_key "lists", "users"
   add_foreign_key "purchases", "list_items"
