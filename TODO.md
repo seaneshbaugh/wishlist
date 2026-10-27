@@ -136,15 +136,16 @@ Friendship forms use targeted Turbo Stream responses with HTML redirect fallback
 
 ### 2. Routes, tokens, and lifecycle
 
-- [ ] Keep inviter, invited email, invitee, and acceptance state out of arbitrary update parameters. No editing the email on an existing invitation; cancel and create another instead.
-- [ ] Add an authenticated InvitationsController index/create/resend/destroy workflow. Scope dashboard and mutation lookups through the current user's sent invitations; guessed or foreign IDs return 404.
-- [ ] Add a separate token-based acceptance page and explicit submission route usable before login. Keep GET read-only, including for mail scanners. Retain normal CSRF protection on submissions.
-- [ ] Use purpose-scoped Rails signed IDs without expiration. Generate acceptance links only for recipient emails; do not expose tokens or copy-link controls to inviters. Filter invitation token parameters from logs.
-- [ ] Require a valid token and a pending invitation for acceptance. Missing, malformed, cancelled, or consumed invitations fail without changing accounts or friendships. Use clear feedback for a repeated submission where practical without exposing account data.
-- [ ] Create accepts only email, derives inviter from current_user, and rejects self/already-friend invitations. Return consistent success feedback and listing data for other existing and nonexistent accounts.
-- [ ] Repeated create reuses the existing pending row and does not silently resend. Provide an explicit resend action; handle pending-row uniqueness races without duplicate rows or notifications.
-- [ ] Resend and cancellation lock and recheck the pending invitation. Accepted invitations cannot be resent or cancelled. Cancellation deletes only the invitation, never a user or friendship.
-- [ ] Prepare and render responses outside transactions. Enqueue email only after commit; preserve explicit controller success/failure branches.
+- [x] Keep inviter, invited email, invitee, and acceptance state out of arbitrary update parameters. No editing the email on an existing invitation; cancel and create another instead.
+- [x] Add an authenticated InvitationsController index/create/resend/destroy workflow. Scope dashboard and mutation lookups through the current user's sent invitations; guessed or foreign IDs return 404.
+- [x] Add a separate token-based acceptance page usable before login. Keep GET read-only, including for mail scanners.
+- [ ] Add the explicit acceptance submission route with normal CSRF protection alongside the registration transaction in section 3. The landing page currently explains that acceptance is not available yet.
+- [x] Use purpose-scoped Rails signed IDs without expiration. Generate acceptance links only for recipient emails; do not expose tokens or copy-link controls to inviters. Filter invitation token parameters from logs.
+- [x] Require a valid token and a pending invitation for the acceptance landing page. Missing, malformed, cancelled, or consumed invitations return 404 without changing accounts or friendships. Recheck these conditions on submission when section 3 adds acceptance.
+- [x] Create accepts only email, derives inviter from current_user, and rejects self/already-friend invitations. Return consistent success feedback and listing data for other existing and nonexistent accounts.
+- [x] Repeated create reuses the existing pending row and does not silently resend. Provide an explicit resend action; handle pending-row uniqueness races without duplicate rows or notifications.
+- [x] Resend and cancellation lock and recheck the pending invitation. Accepted invitations cannot be resent or cancelled. Cancellation deletes only the invitation, never a user or friendship.
+- [x] Prepare and render responses outside transactions. Enqueue email only after commit; preserve explicit controller success/failure branches.
 
 ### 3. Registration and existing-account acceptance
 
@@ -163,11 +164,13 @@ Friendship forms use targeted Turbo Stream responses with HTML redirect fallback
 
 ### 4. Email jobs
 
-- [ ] Add localized HTML/text invitation emails with new-account and existing-account wording, inviter identity, friendship consent/removal explanation, and the acceptance link. Do not include wishlist/purchase details.
-- [ ] Deliver only inside a background job, following existing mail/job conventions. Pass the invitation ID, load current state, and generate its signed link inside the job; controllers never send email synchronously.
-- [ ] Choose wording from current account state at delivery time; the acceptance page always resolves current state independently. A user can register between delivery and following the link.
-- [ ] Skip missing, cancelled, accepted, or otherwise inapplicable invitations when jobs execute. Mail failures must not undo saved invitations. A mail already handed off cannot be recalled, but its cancelled/accepted link grants no new authority.
-- [ ] Enqueue one job on successful creation and one on each successful explicit resend, after commit. No jobs for errors, duplicate create, rolled-back changes, or unauthorized requests.
+The basic mailer/job was implemented with section 2 so create/resend queue real email. Mailpit verification and broader acceptance integration remain.
+
+- [x] Add localized HTML/text invitation emails with new-account and existing-account wording, inviter identity, friendship consent/removal explanation, and the acceptance link. Do not include wishlist/purchase details.
+- [x] Deliver only inside a background job, following existing mail/job conventions. Pass the invitation ID, load current state, and generate its signed link inside the job; controllers never send email synchronously.
+- [x] Choose wording from current account state at delivery time; the acceptance page always resolves current state independently. A user can register between delivery and following the link.
+- [x] Skip missing, cancelled, accepted, or otherwise inapplicable invitations when jobs execute. Mail failures must not undo saved invitations. A mail already handed off cannot be recalled, but its cancelled/accepted link grants no new authority.
+- [x] Enqueue one job on successful creation and one on each successful explicit resend, after commit. No jobs for errors, duplicate create, rolled-back changes, or unauthorized requests.
 - [ ] Use accurate sender feedback such as "Invitation queued for sending"; do not claim inbox delivery or add delivery-tracking columns for beta. Verify async delivery and both email variants through Mailpit.
 
 ### 5. UI and Turbo

@@ -1,0 +1,10 @@
+en:
+  invitations:
+    create:
+      success: "Your invitation has been sent."
+      already_pending: "An invitation to this email is already pending. Use Resend to send it again."
+    resend:
+      success: "Your invitation has been resent."
+    destroy:
+      success: "Invitation cancelled."
+      error: "Unable to cancel the invitation."

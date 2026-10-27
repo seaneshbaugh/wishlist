@@ -16,6 +16,7 @@ en:
         invitation:
           attributes:
             email:
+              already_friends: "belongs to a user who is already your friend"
               same_as_inviter: "can't be your own email address"
             invitee:
               same_as_inviter: "can't be the same as the inviter"

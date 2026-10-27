@@ -1,0 +1,11 @@
+<%= t(".introduction", username: @invitation.inviter.username) %>
+
+<% if @existing_account %>
+<%= t(".existing_account") %>
+<% else %>
+<%= t(".new_account") %>
+<% end %>
+
+<%= t(".consent") %>
+
+<%= t(".link") %>: <%= @acceptance_url %>

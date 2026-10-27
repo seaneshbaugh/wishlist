@@ -95,6 +95,28 @@ class InvitationTest < ActiveSupport::TestCase
     assert_not_equal invitation.id, create_invitation.id
   end
 
+  test "accepted friends cannot receive pending invitations in either direction" do
+    [ [ @inviter, @invitee ], [ @invitee, @inviter ] ].each do |requester, recipient|
+      friendship = Friendship.create!(requester: requester, recipient: recipient, accepted_at: Time.current)
+      invitation = @inviter.sent_invitations.build(email: @invitee.email)
+
+      assert_not invitation.valid?
+      assert invitation.errors.of_kind?(:email, :already_friends)
+
+      invitation.assign_attributes(invitee: @invitee, accepted_at: Time.current)
+
+      assert invitation.valid?, invitation.errors.full_messages.to_sentence
+
+      friendship.destroy!
+    end
+  end
+
+  test "pending friend requests do not prevent invitations" do
+    Friendship.create!(requester: @inviter, recipient: @invitee)
+
+    assert create_invitation(email: @invitee.email).persisted?
+  end
+
   test "deleting inviter removes pending and accepted invitations without deleting invitee" do
     pending = create_invitation
     accepted = create_invitation(email: @invitee.email, invitee: @invitee, accepted_at: Time.current)

@@ -1,0 +1,9 @@
+en:
+  invitation_mailer:
+    invitation_message:
+      subject: "%{username} invited you to Wishlist"
+      introduction: "%{username} invited you to Wishlist."
+      existing_account: "You already have an account. Sign in to accept this invitation as a friend request."
+      new_account: "Create an account to accept this invitation."
+      consent: "Accepting establishes friendship with the sender, allowing you to see each other's friends-visible lists. Either of you can remove the friendship afterward."
+      link: "View invitation"

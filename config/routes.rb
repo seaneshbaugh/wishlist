@@ -32,6 +32,8 @@ Rails.application.routes.draw do
     get "/resend-unlock" => "devise/unlocks#new", as: :new_user_unlock
     get "/unlock-account" => "devise/unlocks#show"
 
+    get "/invitation", to: "invitation_acceptances#show", as: :invitation_acceptance
+
     authenticated do
       resource :account, only: %i[show edit update destroy] do
         get "confirm-delete" => "accounts#confirm_delete", as: :confirm_delete
@@ -63,6 +65,12 @@ Rails.application.routes.draw do
         end
         member do
           patch :accept
+        end
+      end
+
+      resources :invitations, only: %i[index create destroy] do
+        member do
+          post :resend
         end
       end
 

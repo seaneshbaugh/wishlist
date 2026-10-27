@@ -14,8 +14,19 @@ class Invitation < ApplicationRecord
                           conditions: -> { pending } }, if: -> { accepted_at.nil? }
   validate :acceptance_is_consistent
   validate :participants_are_different
+  validate :recipient_is_not_already_a_friend, if: -> { accepted_at.nil? }
+
+  def acceptance_token
+    signed_id(purpose: :invitation)
+  end
 
   private
+
+  def recipient_is_not_already_a_friend
+    if inviter && email.present? && inviter.friends.exists?(email: email)
+      errors.add(:email, :already_friends)
+    end
+  end
 
   def acceptance_is_consistent
     if accepted_at.present? && invitee.nil?
