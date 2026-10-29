@@ -105,4 +105,42 @@ class InvitationAcceptancesTest < ApplicationSystemTestCase
     assert_current_path friends_path
     assert recipient.reload.confirmed?
   end
+
+  test "signup leaves another senders invitation pending for explicit friendship acceptance" do
+    other_inviter = users(:amelia)
+
+    other_inviter.confirm
+
+    first = @inviter.sent_invitations.create!(email: "newuser@example.com")
+    second = other_inviter.sent_invitations.create!(email: first.email)
+
+    visit invitation_acceptance_path(token: first.acceptance_token)
+
+    fill_in "Username", with: "newuser"
+    fill_in "Password", with: "test123456", exact: true
+    fill_in "Password confirmation", with: "test123456"
+
+    click_button "Create account and accept invitation"
+
+    assert_current_path friends_path
+    assert_link @inviter.username, exact: true
+    assert_no_link other_inviter.username, exact: true
+    assert_nil second.reload.accepted_at
+    assert_not_includes other_inviter.friends, first.reload.invitee
+
+    visit invitation_acceptance_path(token: second.acceptance_token)
+
+    assert_text "Invitation from #{other_inviter.username}"
+    assert_no_field "Username"
+    assert_no_field "Password"
+    assert_nil second.reload.accepted_at
+
+    click_button "Accept invitation"
+
+    assert_current_path friends_path
+    assert_link @inviter.username, exact: true
+    assert_link other_inviter.username, exact: true
+    assert_equal first.invitee_id, second.reload.invitee_id
+    assert_equal 1, User.where(email: first.email).count
+  end
 end

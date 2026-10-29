@@ -20,12 +20,17 @@ class InvitationNotificationJobTest < ActiveSupport::TestCase
     [ email.html_part, email.text_part ].each do |part|
       assert_includes part.body.decoded, "Create an account"
       assert_includes part.body.decoded, "Accepting establishes friendship"
+      assert_includes part.body.decoded, "remove the friendship afterward"
+      assert_includes part.body.decoded, @invitation.inviter.username
       assert_includes part.body.decoded, @invitation.acceptance_token
     end
   end
 
   test "wording reflects existing account at execution time" do
-    @invitation.update!(email: users(:casie).email)
+    user = User.new(username: "newuser", email: @invitation.email, password: "test123456")
+
+    user.skip_confirmation!
+    user.save!
 
     InvitationNotificationJob.perform_now(@invitation.id)
 
@@ -45,5 +50,27 @@ class InvitationNotificationJobTest < ActiveSupport::TestCase
       invitee: users(:casie), accepted_at: Time.current)
 
     assert_no_emails { InvitationNotificationJob.perform_now(accepted.id) }
+  end
+
+  test "mail delivery failure does not cancel or accept the saved invitation" do
+    interceptor = Class.new do
+      def self.delivering_email(_message)
+        raise IOError, "Mail delivery unavailable"
+      end
+    end
+
+    ActionMailer::Base.register_interceptor(interceptor)
+
+    begin
+      assert_raises IOError do
+        InvitationNotificationJob.perform_now(@invitation.id)
+      end
+
+      assert_nil @invitation.reload.accepted_at
+      assert_nil @invitation.invitee_id
+      assert_equal @invitation, Invitation.find_signed(@invitation.acceptance_token, purpose: :invitation)
+    ensure
+      ActionMailer::Base.unregister_interceptor(interceptor)
+    end
   end
 end

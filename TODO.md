@@ -184,15 +184,15 @@ The basic mailer/job was implemented with section 2 so create/resend queue real 
 
 ### 6. Tests and verification
 
-- [ ] Model/database tests: email normalization, required associations, acceptance-field consistency, self-invitation, one pending row per sender/email, multiple inviters, accepted history, and deletion of either participant without deleting other accounts.
-- [ ] Request tests: authentication and scoped dashboard/resend/cancel authorization; self/already-friend errors; equivalent existing/unknown-account responses and listings; duplicate create; resend enqueue behavior; and cancellation/accepted-state restrictions.
-- [ ] Token/registration tests: unrestricted registration GET/POST denied, missing/tampered/wrong-purpose/cancelled/consumed tokens rejected, old links remain invalid after reinvitation, and no time-based expiration. GET never mutates state.
-- [ ] Acceptance tests: server-bound email, normal validation errors, confirmed signup without redundant confirmation, matching existing account, wrong signed-in account, unconfirmed credentials, and current versus pending changed email. Invalid credentials never confirm or authenticate an account.
-- [ ] Friendship tests: new row direction, pending pair in both directions, already accepted pair, independent remaining invitations, repeat acceptance, and removal not reactivating invitations.
-- [ ] Transaction/race regression tests: cancellation versus acceptance, duplicate invitation creation, simultaneous account/pair creation, rollback of partial work, and notification enqueue after commit exactly once per intended event. Prefer deterministic tests over fragile concurrency timing.
-- [ ] Mail/job tests: both recipient variants, consent wording, acceptance URLs, creation/resend timing, deleted/accepted records before execution, and no new-account notifications for existing recipients.
-- [ ] System tests: invite new user, follow job-delivered email, register and browse the inviter's friends-visible lists; existing-user acceptance; wrong-account switching; targeted validation errors; resend/cancel; and acceptance of a second sender's invitation after signup.
-- [ ] Update the existing registration integration/system tests for invitation-only entry while retaining real browser login and the complete successful registration workflow. Run the full suite and existing style checks.
+- [x] Model/database tests: email normalization, required associations, acceptance-field consistency, self-invitation, one pending row per sender/email, multiple inviters, accepted history, and deletion of either participant without deleting other accounts.
+- [x] Request tests: authentication and scoped dashboard/resend/cancel authorization; self/already-friend errors; equivalent existing/unknown-account responses and listings; duplicate create; resend enqueue behavior; and cancellation/accepted-state restrictions.
+- [x] Token/registration tests: unrestricted registration GET/POST denied, missing/tampered/wrong-purpose/cancelled/consumed tokens rejected, old links remain invalid after reinvitation, and no time-based expiration. GET never mutates state.
+- [x] Acceptance tests: server-bound email, normal validation errors, confirmed signup without redundant confirmation, matching existing account, wrong signed-in account, unconfirmed credentials, and current versus pending changed email. Invalid credentials never confirm or authenticate an account.
+- [x] Friendship tests: new row direction, pending pair in both directions, already accepted pair, independent remaining invitations, repeat acceptance, and removal not reactivating invitations.
+- [x] Transaction/race regression tests: cancellation versus acceptance, duplicate invitation creation, simultaneous account/pair creation, rollback of partial work, and notification enqueue after commit exactly once per intended event. Coverage uses deterministic competing-change simulations and database constraint tests, not simultaneous-connection stress tests.
+- [x] Mail/job tests: both recipient variants, consent wording, acceptance URLs, creation/resend timing, deleted/accepted records before execution, and no new-account notifications for existing recipients.
+- [x] System tests: invite new user, follow job-delivered email, register and browse the inviter's friends-visible lists; existing-user acceptance; wrong-account switching; targeted validation errors; resend/cancel; and acceptance of a second sender's invitation after signup.
+- [x] Update the existing registration integration/system tests for invitation-only entry while retaining real browser login and the complete successful registration workflow. Run the full suite and existing style checks.
 - [ ] Manually walk through new-user and existing-user invitation flows with two browser sessions and Mailpit before beta. Verify cancelled links and independent invitations too.
 
 ### 7. Setup and documentation

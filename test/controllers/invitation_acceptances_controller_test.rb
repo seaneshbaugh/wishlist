@@ -443,6 +443,100 @@ class InvitationAcceptancesControllerTest < ActionDispatch::IntegrationTest
     assert_nil @invitation.reload.accepted_at
   end
 
+  test "cancelled and consumed POST tokens cannot create accounts or recreate removed friendship" do
+    token = @invitation.acceptance_token
+
+    @invitation.destroy!
+
+    replacement = users(:sean).sent_invitations.create!(email: "new@example.com")
+
+    assert_no_difference [ "User.count", "Friendship.count" ] do
+      post invitation_acceptance_path, params: { token: token, user: signup_params[:user] }
+    end
+
+    assert_response :not_found
+
+    post invitation_acceptance_path, params: { token: replacement.acceptance_token, user: signup_params[:user] }
+
+    assert_redirected_to friends_path
+
+    recipient = replacement.reload.invitee
+    friendship = Friendship.sole
+
+    delete friendship_path(friendship)
+
+    assert_redirected_to friends_path
+
+    assert_no_enqueued_jobs do
+      assert_no_difference [ "User.count", "Friendship.count" ] do
+        post invitation_acceptance_path, params: { token: replacement.acceptance_token }
+      end
+    end
+
+    assert_response :not_found
+    assert_not_includes recipient.friends, replacement.inviter
+    assert replacement.reload.accepted_at.present?
+  end
+
+  test "failed acceptance rolls back confirmation of an existing unconfirmed account" do
+    recipient = users(:casie)
+
+    @invitation.update!(email: recipient.email)
+
+    reject_acceptance = ->(invitation) { throw :abort if invitation.accepted_at.present? }
+
+    Invitation.set_callback(:validation, :before, reject_acceptance)
+
+    begin
+      assert_no_enqueued_jobs do
+        assert_no_difference "Friendship.count" do
+          post invitation_acceptance_path, params: { token: @invitation.acceptance_token,
+            user: { password: "test123456" } }
+        end
+      end
+
+      assert_response :unprocessable_entity
+      assert_not recipient.reload.confirmed?
+      assert_nil @invitation.reload.accepted_at
+
+      get friends_path
+
+      assert_response :not_found
+    ensure
+      Invitation.skip_callback(:validation, :before, reject_acceptance)
+    end
+  end
+
+  test "acceptance rechecks consumed state after acquiring invitation lock" do
+    recipient = users(:casie)
+
+    recipient.confirm
+
+    @invitation.update!(email: recipient.email)
+
+    confirm_and_sign_in recipient
+
+    changed = false
+    subscriber = lambda do |*, payload|
+      if !changed && payload[:sql].start_with?("SELECT") && payload[:sql].include?('"users"')
+        changed = true
+
+        @invitation.update_columns(invitee_id: recipient.id, accepted_at: Time.current)
+      end
+    end
+
+    assert_no_enqueued_jobs do
+      assert_no_difference [ "User.count", "Friendship.count" ] do
+        ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+          post invitation_acceptance_path, params: { token: @invitation.acceptance_token }
+        end
+      end
+    end
+
+    assert changed
+    assert_response :not_found
+  end
+
   private
 
   def signup_params(user: { username: "newuser", password: "test123456", password_confirmation: "test123456" })
