@@ -91,7 +91,7 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    daTabase: <%= ENV.fetch("WISHLIST_DATABASE") %>
+    database: <%= ENV.fetch("WISHLIST_DATABASE") %>
     username: <%= ENV.fetch("WISHLIST_DATABASE_USERNAME") %>
     password: <%= ENV.fetch("WISHLIST_DATABASE_PASSWORD") %>
     host: <%= ENV.fetch("WISHLIST_DATABASE_HOST") %>
