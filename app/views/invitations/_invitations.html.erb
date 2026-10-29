@@ -1,0 +1,19 @@
+<div id="invitations">
+  <% if @invitations.empty? %>
+    <p class="mt-6">You haven't sent any invitations.</p>
+  <% end %>
+  <ul class="mt-6 space-y-4">
+    <% @invitations.each do |invitation| %>
+      <li id="<%= dom_id(invitation) %>">
+        <span><%= invitation.email %></span>
+        <% if invitation.accepted_at.present? %>
+          <span>Accepted</span>
+        <% else %>
+          <span>Pending</span>
+          <%= button_to "Resend", resend_invitation_path(invitation), method: :post, aria: { label: "Resend invitation to #{invitation.email}" } %>
+          <%= button_to "Cancel invitation", invitation_path(invitation), method: :delete, aria: { label: "Cancel invitation to #{invitation.email}" }, form: { data: { turbo_confirm: "Cancel this invitation? Its link will stop working." } } %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</div>

@@ -1,0 +1,11 @@
+<%= turbo_stream.replace "invitation-form" do %>
+  <%= render "form", invitation: current_user.sent_invitations.build %>
+<% end %>
+
+<%= turbo_stream.replace "invitations" do %>
+  <%= render "invitations" %>
+<% end %>
+
+<%= turbo_stream.append "flash" do %>
+  <%= render "shared/notification", color_classes: "border-green-200 bg-green-50 text-green-700", message: message %>
+<% end %>

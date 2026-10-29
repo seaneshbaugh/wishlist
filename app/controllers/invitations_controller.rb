@@ -29,13 +29,29 @@ class InvitationsController < ApplicationController
         message = t(".already_pending")
       end
 
-      flash[:success] = message
+      respond_to do |format|
+        format.turbo_stream do
+          load_invitations
 
-      redirect_to invitations_url, status: :see_other
+          render "create", locals: { message: message }
+        end
+        format.html do
+          flash[:success] = message
+
+          redirect_to invitations_url, status: :see_other
+        end
+      end
     else
-      load_invitations
+      respond_to do |format|
+        format.turbo_stream do
+          render "form_error", status: :unprocessable_entity
+        end
+        format.html do
+          load_invitations
 
-      render "index", status: :unprocessable_entity
+          render "index", status: :unprocessable_entity
+        end
+      end
     end
   end
 
@@ -50,9 +66,16 @@ class InvitationsController < ApplicationController
       end
     end
 
-    flash[:success] = t(".success")
+    respond_to do |format|
+      format.turbo_stream do
+        render "resend", locals: { message: t(".success") }
+      end
+      format.html do
+        flash[:success] = t(".success")
 
-    redirect_to invitations_url, status: :see_other
+        redirect_to invitations_url, status: :see_other
+      end
+    end
   end
 
   def destroy
@@ -64,13 +87,26 @@ class InvitationsController < ApplicationController
       invitation.destroy
     end
 
-    if destroyed
-      flash[:success] = t(".success")
-    else
-      flash[:error] = t(".error")
-    end
+    respond_to do |format|
+      format.turbo_stream do
+        if destroyed
+          load_invitations
 
-    redirect_to invitations_url, status: :see_other
+          render "destroy", locals: { message: t(".success") }
+        else
+          render "destroy_error", locals: { message: t(".error") }, status: :unprocessable_entity
+        end
+      end
+      format.html do
+        if destroyed
+          flash[:success] = t(".success")
+        else
+          flash[:error] = t(".error")
+        end
+
+        redirect_to invitations_url, status: :see_other
+      end
+    end
   end
 
   private

@@ -175,9 +175,9 @@ The basic mailer/job was implemented with section 2 so create/resend queue real 
 
 ### 5. UI and Turbo
 
-- [ ] Add Invitations navigation and an index with all of the current user's invited emails, pending/accepted status, an email form, and an empty state. Do not expose invitee IDs, profile links, usernames, or pre-acceptance account-existence clues.
-- [ ] Pending invitations have accessible Resend and Cancel controls; cancellation uses normal Turbo confirmation. Accepted invitations show history without resend/cancel controls.
-- [ ] Use form_with, targeted Turbo Stream responses, existing notifications, and ordinary HTML fallbacks. Preserve email on validation errors and clear only the successfully submitted form.
+- [x] Add Invitations navigation and an index with all of the current user's invited emails, pending/accepted status, an email form, and an empty state. Do not expose invitee IDs, profile links, usernames, or pre-acceptance account-existence clues.
+- [x] Pending invitations have accessible Resend and Cancel controls; cancellation uses normal Turbo confirmation. Accepted invitations show history without resend/cancel controls.
+- [x] Use form_with, targeted Turbo Stream responses, existing notifications, and ordinary HTML fallbacks. Preserve email on validation errors and clear only the successfully submitted form.
 - [x] Acceptance page clearly identifies the inviter and invited email, explains friendship consent, and presents registration, matching-account sign-in/acceptance, or account-switch instructions as appropriate. Do not expose a public user directory or unrelated profiles.
 - [x] Provide useful registration/credential errors without consuming the invitation or losing its context. Do not echo passwords into responses, URLs, or logs.
 - [x] After success, show an appropriate authenticated destination and confirmation of friendship. Keep expired-invitation UI out of scope because invitations do not expire.

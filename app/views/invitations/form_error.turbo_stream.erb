@@ -1,0 +1,7 @@
+<%= turbo_stream.replace "invitation-form" do %>
+  <%= render "form", invitation: @invitation %>
+<% end %>
+
+<%= turbo_stream.append "flash" do %>
+  <%= render "shared/notification", color_classes: "border-red-200 bg-red-50 text-red-700", message: @invitation.errors.full_messages.to_sentence %>
+<% end %>

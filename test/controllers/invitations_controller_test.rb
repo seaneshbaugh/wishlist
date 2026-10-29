@@ -308,6 +308,89 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "Turbo creation refreshes list and clears form without exposing account identity" do
+    post invitations_path, params: { invitation: { email: @recipient.email } }, as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace'][target='invitation-form'] input[name='invitation[email]']:not([value])"
+    assert_select "turbo-stream[action='replace'][target='invitations'] span", text: @recipient.email
+    assert_select "turbo-stream[action='append'][target='flash']", text: /#{Regexp.escape(I18n.t("invitations.create.success"))}/
+    assert_nil flash[:success]
+    assert_not_includes response.body, Invitation.sole.acceptance_token
+    assert_select "a[href*='/friends/']", count: 0
+
+    assert_no_enqueued_jobs do
+      post invitations_path, params: { invitation: { email: @recipient.email } }, as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_select "turbo-stream[target='flash']", text: /already pending/
+    assert_equal 1, Invitation.count
+  end
+
+  test "Turbo invalid creation replaces only the form and preserves input" do
+    post invitations_path, params: { invitation: { email: "invalid" } }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_select "turbo-stream[action='replace']", count: 1
+    assert_select "turbo-stream[target='invitation-form'] input[value='invalid']"
+    assert_select "turbo-stream[target='invitations']", count: 0
+    assert_select "turbo-stream[action='append'][target='flash']"
+  end
+
+  test "Turbo resend leaves form and list intact and cancellation refreshes the empty list" do
+    invitation = create_invitation
+
+    post resend_invitation_path(invitation), as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace']", count: 0
+    assert_select "turbo-stream[target='flash']", text: /#{Regexp.escape(I18n.t("invitations.resend.success"))}/
+
+    delete invitation_path(invitation), as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace']", count: 1
+    assert_select "turbo-stream[target='invitations']", text: /You haven't sent any invitations/
+    assert_select "turbo-stream[target='invitation-form']", count: 0
+  end
+
+  test "failed Turbo cancellation leaves the existing DOM in place" do
+    invitation = create_invitation
+    prevent_destroy = ->(record) { throw :abort if record.id == invitation.id }
+
+    Invitation.set_callback(:destroy, :before, prevent_destroy)
+
+    begin
+      assert_no_difference "Invitation.count" do
+        delete invitation_path(invitation), as: :turbo_stream
+      end
+
+      assert_response :unprocessable_entity
+      assert_select "turbo-stream[action='replace']", count: 0
+      assert_select "turbo-stream[target='flash']", text: /Unable to cancel/
+    ensure
+      Invitation.skip_callback(:destroy, :before, prevent_destroy)
+    end
+  end
+
+  test "accepted history has no mutation controls and navigation requires authentication" do
+    invitation = create_invitation(invitee: @recipient, accepted_at: Time.current)
+
+    get invitations_path
+
+    assert_select "nav a[href='#{invitations_path}']", count: 1
+    assert_select "#mobile-menu a[href='#{invitations_path}']", count: 1
+    assert_select "#invitation_#{invitation.id}", text: /Accepted/
+    assert_select "#invitation_#{invitation.id} form", count: 0
+
+    sign_out @inviter
+
+    get new_user_session_path
+
+    assert_select "a[href='#{invitations_path}']", count: 0
+  end
+
   private
 
   def create_invitation(**attributes)

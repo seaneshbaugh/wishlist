@@ -1,28 +1,6 @@
 <div class="mx-auto w-full max-w-5xl">
   <h1 class="text-3xl font-semibold">Invitations</h1>
-  <%= form_with model: @invitation, url: invitations_path, method: :post, class: "mt-6 space-y-3" do |form| %>
-    <% @invitation.errors.full_messages.each do |message| %>
-      <p role="alert" class="text-red-700"><%= message %></p>
-    <% end %>
-    <%= form.label :email, "Email address", class: "block font-medium" %>
-    <%= form.email_field :email, required: true, class: "rounded border border-slate-300 px-3 py-2" %>
-    <%= form.submit "Send invitation", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
-  <% end %>
-  <% if @invitations.empty? %>
-    <p class="mt-6">You haven't sent any invitations.</p>
-  <% end %>
-  <ul class="mt-6 space-y-4">
-    <% @invitations.each do |invitation| %>
-      <li id="<%= dom_id(invitation) %>">
-        <span><%= invitation.email %></span>
-        <% if invitation.accepted_at.present? %>
-          <span>Accepted</span>
-        <% else %>
-          <span>Pending</span>
-          <%= button_to "Resend", resend_invitation_path(invitation), method: :post %>
-          <%= button_to "Cancel invitation", invitation_path(invitation), method: :delete, form: { data: { turbo_confirm: "Cancel this invitation? Its link will stop working." } } %>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
+  <p class="mt-4">Invite someone to Wishlist. Accepting also makes you friends so you can see each other's friends-visible lists.</p>
+  <%= render "form", invitation: @invitation %>
+  <%= render "invitations" %>
 </div>

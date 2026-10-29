@@ -1,0 +1,10 @@
+<div id="invitation-form">
+  <%= form_with model: invitation, url: invitations_path, method: :post, class: "mt-6 space-y-3" do |form| %>
+    <% invitation.errors.full_messages.each do |message| %>
+      <p role="alert" class="text-red-700"><%= message %></p>
+    <% end %>
+    <%= form.label :email, "Email address", class: "block font-medium" %>
+    <%= form.email_field :email, required: true, class: "rounded border border-slate-300 px-3 py-2" %>
+    <%= form.submit "Send invitation", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
+  <% end %>
+</div>
