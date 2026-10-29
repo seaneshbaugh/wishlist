@@ -1,54 +1,54 @@
 require "test_helper"
 
 class RegistrationFlowTest < ActionDispatch::IntegrationTest
-  test "registration, confirmation, and login" do
-    get "/register"
+  include ActiveJob::TestHelper
+  include ActionMailer::TestHelper
+
+  test "invitation email registration welcome and subsequent login" do
+    inviter = users(:sean)
+
+    confirm_and_sign_in inviter
+
+    assert_no_emails do
+      post invitations_path, params: { invitation: { email: "newuser@test.com" } }
+    end
+
+    perform_enqueued_jobs(only: InvitationNotificationJob)
+
+    email = ActionMailer::Base.deliveries.last
+    link = Nokogiri::HTML(email.html_part.body.decoded).at_css("a")["href"]
+    uri = URI.parse(link)
+
+    sign_out inviter
+
+    get "#{uri.path}?#{uri.query}"
 
     assert_response :success
 
-    assert_no_emails
+    token = response.parsed_body.at_css("input[name='token']")["value"]
 
-    perform_enqueued_jobs(only: RegistrationNotificationJob) do
-      post "/register", params: { user: { username: "newuser", email: "newuser@test.com", password: "test123456", password_confirmation: "test123456" } }
+    assert_no_emails do
+      post invitation_acceptance_path, params: { token: token,
+        user: { username: "newuser", password: "test123456", password_confirmation: "test123456" } }
     end
 
-    assert_performed_jobs(1, only: RegistrationNotificationJob)
+    assert_redirected_to friends_path
 
-    assert_emails 2
+    user = User.find_by!(email: "newuser@test.com")
 
-    confirmation_instructions_email = ActionMailer::Base.deliveries.find { |email| email.subject == "Confirmation instructions" }
+    assert user.confirmed?
+    assert_includes inviter.friends, user
+    assert_enqueued_with job: RegistrationNotificationJob, args: [ user ]
+    assert_enqueued_with job: RegistrationWelcomeJob, args: [ user ]
 
-    assert_not_nil confirmation_instructions_email
+    perform_enqueued_jobs(only: [ RegistrationNotificationJob, RegistrationWelcomeJob ])
 
-    notification_email = ActionMailer::Base.deliveries.find { |email| email.subject.start_with?("newuser@test.com has created a Wishlist account") }
+    assert ActionMailer::Base.deliveries.any? { |message| message.subject.start_with?("Welcome to ") }
+    assert_not ActionMailer::Base.deliveries.any? { |message| message.subject == "Confirmation instructions" }
 
-    assert_not_nil notification_email
+    delete destroy_user_session_path
 
-    confirmation_link = Nokogiri::HTML.parse(confirmation_instructions_email.body.to_s).css("a[href*=\"confirm-registration?confirmation_token=\"]").first
-
-    assert_not_nil confirmation_link
-
-    confirmation_path = "/#{confirmation_link.attributes["href"].value.gsub(/\Ahttp:\/\/.+\//, '')}"
-
-    perform_enqueued_jobs(only: RegistrationWelcomeJob) do
-      get confirmation_path
-    end
-
-    assert_performed_jobs(1, only: RegistrationWelcomeJob)
-
-    assert_emails 3
-
-    user_welcome_email = ActionMailer::Base.deliveries.find { |email| email.subject.start_with?("Welcome to ") }
-
-    assert_not_nil user_welcome_email
-
-    assert_response :redirect
-
-    follow_redirect!
-
-    assert_response :success
-
-    post "/login", params: { user: { username: "newuser", password: "test123456" } }
+    post user_session_path, params: { user: { username: "newuser", password: "test123456" } }
 
     assert_response :redirect
 

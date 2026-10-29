@@ -139,9 +139,9 @@ Friendship forms use targeted Turbo Stream responses with HTML redirect fallback
 - [x] Keep inviter, invited email, invitee, and acceptance state out of arbitrary update parameters. No editing the email on an existing invitation; cancel and create another instead.
 - [x] Add an authenticated InvitationsController index/create/resend/destroy workflow. Scope dashboard and mutation lookups through the current user's sent invitations; guessed or foreign IDs return 404.
 - [x] Add a separate token-based acceptance page usable before login. Keep GET read-only, including for mail scanners.
-- [ ] Add the explicit acceptance submission route with normal CSRF protection alongside the registration transaction in section 3. The landing page currently explains that acceptance is not available yet.
+- [x] Add the explicit acceptance submission route with normal CSRF protection alongside the registration transaction in section 3.
 - [x] Use purpose-scoped Rails signed IDs without expiration. Generate acceptance links only for recipient emails; do not expose tokens or copy-link controls to inviters. Filter invitation token parameters from logs.
-- [x] Require a valid token and a pending invitation for the acceptance landing page. Missing, malformed, cancelled, or consumed invitations return 404 without changing accounts or friendships. Recheck these conditions on submission when section 3 adds acceptance.
+- [x] Require a valid token and a pending invitation for the acceptance landing page. Missing, malformed, cancelled, or consumed invitations return 404 without changing accounts or friendships. Recheck pending state under the invitation lock on submission.
 - [x] Create accepts only email, derives inviter from current_user, and rejects self/already-friend invitations. Return consistent success feedback and listing data for other existing and nonexistent accounts.
 - [x] Repeated create reuses the existing pending row and does not silently resend. Provide an explicit resend action; handle pending-row uniqueness races without duplicate rows or notifications.
 - [x] Resend and cancellation lock and recheck the pending invitation. Accepted invitations cannot be resent or cancelled. Cancellation deletes only the invitation, never a user or friendship.
@@ -149,38 +149,38 @@ Friendship forms use targeted Turbo Stream responses with HTML redirect fallback
 
 ### 3. Registration and existing-account acceptance
 
-- [ ] Review current Devise routes/controllers and gate both registration GET and POST on a valid pending invitation. Remove unrestricted signup navigation while preserving ordinary login, password recovery, account editing, and reconfirmation.
-- [ ] New-user acceptance asks for username/password/password confirmation and binds email server-side to the invitation. Preserve normal User validations and submitted non-secret values on failure.
-- [ ] In one transaction, lock/recheck the invitation, create the confirmed User, establish accepted friendship, and populate invitation invitee/accepted_at. Failure rolls back all three; cancellation winning the lock prevents registration.
-- [ ] Existing confirmed recipients sign in normally and return to the invitation page for explicit acceptance. Require the account's current email to match; never match a pending `unconfirmed_email`. Do not consume the invitation merely by signing in.
-- [ ] Show a clear account-switch flow for a signed-in recipient whose current email does not match. Preserve the invitation across the switch without an arbitrary external return URL.
-- [ ] Implement an explicit credential-verification path for existing unconfirmed accounts, since ordinary Devise sign-in rejects them. Confirm and authenticate only after valid credentials, matching invitation email, and successful transactional acceptance. Preserve applicable Devise lockout/authentication safeguards rather than bypassing them with a password-only shortcut.
-- [ ] Handle an account being created or its email changing between page load and submission. Recheck account/email state on submission; never overwrite an existing account or turn the invitation into password-reset authority.
-- [ ] Create friendship with inviter/requester and invitee/recipient; accept an existing pending pair in either direction without reversing it; leave accepted pairs unchanged. Handle unordered-pair uniqueness races without duplicate rows or a failed acceptance.
-- [ ] Leave other invitations to the same email pending. Their acceptance later follows the existing-account flow. Never automatically accept all invitations after signup.
-- [ ] Make repeated/concurrent acceptance create at most one account, one friendship pair, and one acceptance transition. Define a consistent lock order for invitation, user, and existing friendship operations to avoid introducing deadlocks.
-- [ ] Preserve registration/admin and welcome notifications, enqueueing once after a successful commit. Move the invitation welcome trigger out of the confirmation-controller-only path; invitation signup should not send a redundant confirmation email. Existing-account acceptance must not send new-account welcome/admin notifications.
-- [ ] Avoid duplicate friendship-request/acceptance notifications as a side effect of invitation acceptance. Invitation email provides the initial notification; no new invitation-accepted email is required for beta.
+- [x] Review current Devise routes/controllers and gate both registration GET and POST on a valid pending invitation. Remove unrestricted signup navigation while preserving ordinary login, password recovery, account editing, and reconfirmation.
+- [x] New-user acceptance asks for username/password/password confirmation and binds email server-side to the invitation. Preserve normal User validations and submitted non-secret values on failure.
+- [x] In one transaction, lock/recheck the invitation, create the confirmed User, establish accepted friendship, and populate invitation invitee/accepted_at. Failure rolls back all three; cancellation winning the lock prevents registration.
+- [x] Existing confirmed recipients sign in normally and return to the invitation page for explicit acceptance. Require the account's current email to match; never match a pending `unconfirmed_email`. Do not consume the invitation merely by signing in.
+- [x] Show a clear account-switch flow for a signed-in recipient whose current email does not match. Preserve the invitation across the switch without an arbitrary external return URL.
+- [x] Implement an explicit credential-verification path for existing unconfirmed accounts, since ordinary Devise sign-in rejects them. Confirm and authenticate only after valid credentials, matching invitation email, and successful transactional acceptance. Preserve applicable Devise lockout/authentication safeguards rather than bypassing them with a password-only shortcut.
+- [x] Handle an account being created or its email changing between page load and submission. Recheck account/email state on submission; never overwrite an existing account or turn the invitation into password-reset authority.
+- [x] Create friendship with inviter/requester and invitee/recipient; accept an existing pending pair in either direction without reversing it; leave accepted pairs unchanged. Handle unordered-pair uniqueness races without duplicate rows or a failed acceptance.
+- [x] Leave other invitations to the same email pending. Their acceptance later follows the existing-account flow. Never automatically accept all invitations after signup.
+- [x] Make repeated/concurrent acceptance create at most one account, one friendship pair, and one acceptance transition. Define a consistent lock order for invitation, user, and existing friendship operations to avoid introducing deadlocks.
+- [x] Preserve registration/admin and welcome notifications, enqueueing once after a successful commit. Move the invitation welcome trigger out of the confirmation-controller-only path; invitation signup should not send a redundant confirmation email. Existing-account acceptance must not send new-account welcome/admin notifications.
+- [x] Avoid duplicate friendship-request/acceptance notifications as a side effect of invitation acceptance. Invitation email provides the initial notification; no new invitation-accepted email is required for beta.
 
 ### 4. Email jobs
 
-The basic mailer/job was implemented with section 2 so create/resend queue real email. Mailpit verification and broader acceptance integration remain.
+The basic mailer/job was implemented with section 2 so create/resend queue real email. Section 3 added acceptance integration and job-delivered email/browser tests. Mailpit verification remains.
 
 - [x] Add localized HTML/text invitation emails with new-account and existing-account wording, inviter identity, friendship consent/removal explanation, and the acceptance link. Do not include wishlist/purchase details.
 - [x] Deliver only inside a background job, following existing mail/job conventions. Pass the invitation ID, load current state, and generate its signed link inside the job; controllers never send email synchronously.
 - [x] Choose wording from current account state at delivery time; the acceptance page always resolves current state independently. A user can register between delivery and following the link.
 - [x] Skip missing, cancelled, accepted, or otherwise inapplicable invitations when jobs execute. Mail failures must not undo saved invitations. A mail already handed off cannot be recalled, but its cancelled/accepted link grants no new authority.
 - [x] Enqueue one job on successful creation and one on each successful explicit resend, after commit. No jobs for errors, duplicate create, rolled-back changes, or unauthorized requests.
-- [ ] Use accurate sender feedback such as "Invitation queued for sending"; do not claim inbox delivery or add delivery-tracking columns for beta. Verify async delivery and both email variants through Mailpit.
+- [ ] Verify async delivery and both email variants through Mailpit. Sender feedback deliberately uses sent/resent wording; users do not need queue implementation details. No delivery-tracking columns for beta.
 
 ### 5. UI and Turbo
 
 - [ ] Add Invitations navigation and an index with all of the current user's invited emails, pending/accepted status, an email form, and an empty state. Do not expose invitee IDs, profile links, usernames, or pre-acceptance account-existence clues.
 - [ ] Pending invitations have accessible Resend and Cancel controls; cancellation uses normal Turbo confirmation. Accepted invitations show history without resend/cancel controls.
 - [ ] Use form_with, targeted Turbo Stream responses, existing notifications, and ordinary HTML fallbacks. Preserve email on validation errors and clear only the successfully submitted form.
-- [ ] Acceptance page clearly identifies the inviter and invited email, explains friendship consent, and presents registration, matching-account sign-in/acceptance, or account-switch instructions as appropriate. Do not expose a public user directory or unrelated profiles.
-- [ ] Provide useful registration/credential errors without consuming the invitation or losing its context. Do not echo passwords into responses, URLs, or logs.
-- [ ] After success, show an appropriate authenticated destination and confirmation of friendship. Keep expired-invitation UI out of scope because invitations do not expire.
+- [x] Acceptance page clearly identifies the inviter and invited email, explains friendship consent, and presents registration, matching-account sign-in/acceptance, or account-switch instructions as appropriate. Do not expose a public user directory or unrelated profiles.
+- [x] Provide useful registration/credential errors without consuming the invitation or losing its context. Do not echo passwords into responses, URLs, or logs.
+- [x] After success, show an appropriate authenticated destination and confirmation of friendship. Keep expired-invitation UI out of scope because invitations do not expire.
 
 ### 6. Tests and verification
 

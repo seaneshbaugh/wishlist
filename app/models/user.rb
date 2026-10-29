@@ -37,4 +37,12 @@ class User < ApplicationRecord
   def normalize_friendly_id(value)
     value
   end
+
+  protected
+
+  def send_devise_notification(notification, *args)
+    ActiveRecord.after_all_transactions_commit do
+      devise_mailer.public_send(notification, self, *args).deliver_later
+    end
+  end
 end

@@ -1,0 +1,10 @@
+en:
+  invitation_acceptances:
+    create:
+      account_changed: "An account now exists for this email. Review the instructions below before continuing."
+      wrong_account: "Switch to the account matching this invitation before accepting."
+      sign_in_required: "An account already exists for this email. Sign in to accept the invitation."
+      inactive: "This account cannot sign in. Check its status before accepting."
+      invalid_credentials: "Invalid password or locked account."
+      error: "Unable to accept the invitation. Please try again."
+      success: "Invitation accepted. You are now friends."

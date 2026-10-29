@@ -21,8 +21,8 @@ Rails.application.routes.draw do
     get "/update-password" => "devise/passwords#edit", as: :edit_user_password
     put "/update-password" => "devise/passwords#update"
 
-    post "/register" => "registrations#create", as: :user_registration
-    get "/register" => "devise/registrations#new", as: :new_user_registration
+    post "/register" => "invitation_acceptances#create", as: :user_registration
+    get "/register" => "invitation_acceptances#show", as: :new_user_registration
 
     post "/confirm-registration" => "devise/confirmations#create", as: :user_confirmation
     get "/resend-confirmation" => "devise/confirmations#new", as: :new_user_confirmation
@@ -33,6 +33,8 @@ Rails.application.routes.draw do
     get "/unlock-account" => "devise/unlocks#show"
 
     get "/invitation", to: "invitation_acceptances#show", as: :invitation_acceptance
+    post "/invitation", to: "invitation_acceptances#create", as: :accept_invitation
+    post "/invitation/switch-account", to: "invitation_acceptances#switch_account", as: :switch_invitation_account
 
     authenticated do
       resource :account, only: %i[show edit update destroy] do

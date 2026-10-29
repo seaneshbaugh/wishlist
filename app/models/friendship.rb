@@ -8,6 +8,11 @@ class Friendship < ApplicationRecord
   validate :participants_are_different
   validate :user_pair_is_unique
 
+  def self.between(first_user, second_user)
+    where(requester: first_user, recipient: second_user)
+      .or(where(requester: second_user, recipient: first_user)).first
+  end
+
   private
 
   def participants_are_different

@@ -22,9 +22,11 @@ class ConfirmationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "confirming an already confirmed user does not enqueue another welcome job" do
-    raw_token = @user.send_confirmation_instructions
+    raw_token = @user.confirmation_token
 
     get user_confirmation_path, params: { confirmation_token: raw_token }
+
+    assert @user.reload.confirmed?
 
     clear_enqueued_jobs
 

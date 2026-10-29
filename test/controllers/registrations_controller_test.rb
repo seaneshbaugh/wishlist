@@ -1,21 +1,36 @@
 require "test_helper"
 
 class RegistrationsControllerTest < ActionDispatch::IntegrationTest
-  include ActiveJob::TestHelper
+  test "registration requires an invitation on both GET and POST" do
+    get new_user_registration_path
 
-  test "successful registration enqueues registration notification for created user" do
-    perform_enqueued_jobs do
-      post user_registration_path, params: { user: { username: "newuser", email: "newuser@test.com", password: "test123456", password_confirmation: "test123456" } }
+    assert_response :not_found
+
+    assert_no_difference "User.count" do
+      post user_registration_path, params: { user: { username: "newuser", email: "new@example.com",
+        password: "test123456", password_confirmation: "test123456" } }
     end
 
-    user = User.find_by!(email: "newuser@test.com")
-
-    assert_performed_with(job: RegistrationNotificationJob, args: [ user ])
+    assert_response :not_found
   end
 
-  test "invalid registration does not enqueue reigstration notification" do
-    assert_no_enqueued_jobs(only: RegistrationNotificationJob) do
-      post user_registration_path, params: { user: { username: "", email: "invalid", password: "short", password_confirmation: "different" } }
-    end
+  test "registration aliases use the same invitation flow" do
+    invitation = users(:sean).sent_invitations.create!(email: "new@example.com")
+
+    get new_user_registration_path(token: invitation.acceptance_token)
+
+    assert_response :success
+
+    post user_registration_path, params: { token: invitation.acceptance_token,
+      user: { username: "newuser", password: "test123456", password_confirmation: "test123456" } }
+
+    assert_redirected_to friends_path
+    assert User.find_by!(email: invitation.email).confirmed?
+  end
+
+  test "login page has no unrestricted signup link" do
+    get new_user_session_path
+
+    assert_select "a[href='#{new_user_registration_path}']", count: 0
   end
 end

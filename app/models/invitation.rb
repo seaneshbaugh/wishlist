@@ -20,6 +20,23 @@ class Invitation < ApplicationRecord
     signed_id(purpose: :invitation)
   end
 
+  def accept!(recipient)
+    friendship = Friendship.between(inviter, recipient)&.lock!
+
+    unless friendship
+      begin
+        friendship = Friendship.transaction(requires_new: true) do
+          Friendship.create!(requester: inviter, recipient: recipient, accepted_at: Time.current)
+        end
+      rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+        friendship = Friendship.between(inviter, recipient)&.lock! || raise
+      end
+    end
+
+    friendship.update!(accepted_at: Time.current) if friendship.accepted_at.nil?
+    update!(invitee: recipient, accepted_at: Time.current)
+  end
+
   private
 
   def recipient_is_not_already_a_friend
