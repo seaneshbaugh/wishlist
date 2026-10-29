@@ -25,11 +25,12 @@
 
 ## Later product work
 
-- [ ] Implement friendships and friendship-based visibility (detailed plan below).
-- [ ] Add invitation-only signup and invitation acceptance for existing users (detailed plan below).
+- [x] Implement friendships and friendship-based visibility (manual beta/deployment checks remain below).
+- [x] Add invitation-only signup and invitation acceptance for existing users (manual Mailpit/beta checks remain below).
 - [ ] Implement revealed purchase details/anonymous attribution and owner deletion controls if desired; current owner UI displays only purchased quantities.
-- [ ] Improve README setup documentation for Docker on Fedora and Ubuntu/WSL.
+- [x] Improve README setup documentation for Docker on Fedora and Ubuntu/WSL.
 - [ ] Decide deployment and hosting for the family beta.
+- [ ] Correct `production.primary.daTabase` to `database` in `config/database.yml` before deployment; production mail sender/URL/SMTP placeholders also need configuration (documented in README).
 
 ## Friendships: agreed behavior and implementation plan
 
@@ -197,9 +198,9 @@ The basic mailer/job was implemented with section 2 so create/resend queue real 
 
 ### 7. Setup and documentation
 
-- [ ] Document invitation-only signup, independent invitations, confirmation on acceptance, cancellation, and background-worker requirements in README/project context.
-- [ ] Document console-based creation of the first confirmed user using normal validations. Existing accounts remain valid without retrospective invitations. An interactive bootstrap rake task is optional later work, not a prerequisite for this feature.
-- [ ] Keep automatic invitations from friend-request forms, token rotation on resend, expiration, delivery tracking, invitation-acceptance notification emails, and invitation limits out of scope for beta.
+- [x] Document invitation-only signup, independent invitations, confirmation on acceptance, cancellation, and background-worker requirements in README/project context.
+- [x] Document console-based creation of the first confirmed user using normal validations. Existing accounts remain valid without retrospective invitations. An interactive bootstrap rake task is optional later work, not a prerequisite for this feature.
+- [x] Keep automatic invitations from friend-request forms, token rotation on resend, expiration, delivery tracking, invitation-acceptance notification emails, and invitation limits out of scope for beta.
 
 ## Deliberate choices to retain
 

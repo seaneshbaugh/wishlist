@@ -1,49 +1,193 @@
 # Project context
 
-Imported from the previous ChatGPT conversation; updated through friendship email notifications on 2026-10-20. The code and TODO.md are the source of truth.
+Current through invitation documentation on 2026-10-29. The code and TODO.md are
+the source of truth; README.md documents setup and user-facing behavior.
 
 ## Purpose and limits
 
-A simple self-hosted wishlist for family and close friends. Authentication, JavaScript, and modern browsers are required. The public boolean now means visible to accepted friends, never anonymous visitors. Pending requests grant no access. The list UI label still needs changing from Public to Friends. Reasonable HTML fallbacks are useful; perfect no-JavaScript behavior is low priority. Hosting decisions wait until the family beta.
+A simple self-hosted wishlist for family and close friends. Authentication,
+JavaScript, and modern browsers are required. Lists labelled Friends are visible
+only to accepted friends; Private lists are owner-only. The database still uses
+the `public` boolean for Friends visibility. There are no anonymous public lists,
+user directory, friend-of-friend access, or friend profile pages. Reasonable HTML
+fallbacks are useful; perfect no-JavaScript behavior is low priority. Hosting is
+still to be decided for the family beta.
 
 ## Domain and authorization
 
-Users own lists and purchases. Lists have priority-ordered, manually positioned items. Purchases have quantities and reveal dates. Owners should not see purchases before reveal. Purchasers may edit/delete their own unrevealed purchases; list owners may delete revealed purchases. Private lists deny non-owner access, including purchase operations.
+Users own lists and purchases. Lists have manually positioned items sorted by
+priority then position. Owners should not see purchases before their reveal date.
+Purchasers may edit/delete their own unrevealed purchases; list owners may delete
+revealed purchases, including on private lists. Private lists deny all non-owner
+access, including purchase operations.
 
-Non-owners see visible items when quantity remains or they have any historical purchase for the item. Historical purchases deliberately preserve item visibility while the list remains accessible; removal of friendship revokes list and purchase access without deleting purchase history. Multiple historical purchases per user/item are allowed; at most one currently unrevealed purchase is intended. Do not add a unique user/item purchase index.
+Within an accessible list, non-owners see visible items when quantity remains or
+they have any historical purchase for the item. Historical purchases never
+bypass list privacy or missing friendship. Removing friendship revokes list and
+purchase access on subsequent requests without deleting purchase history.
+Multiple historical purchases per user/item are allowed, with at most one
+currently unrevealed purchase. Do not add a unique user/item purchase index.
 
-Parent accessibility belongs in scoped controller lookups; purchase operation rules belong in model predicates. Purchase mutations lock the parent item to prevent simultaneous validations against the same remaining quantity. Responses render outside transactions.
+Parent accessibility belongs in scoped controller lookups; purchase operation
+rules belong in model predicates. Purchase mutations lock the parent item;
+update/delete reload and reauthorize after locking. Existing purchases can retain
+or decrease quantity after an owner lowers the requested amount. Creation and
+reordering lock the relevant parent; index visible-item counts use grouped
+queries. Original review findings are fixed and covered by regression tests.
 
 ## Architecture and preferences
 
-Use conventional explicit Rails actions, `form_with`, Turbo Stream templates, and Stimulus for browser behavior. Successful item/purchase operations replace the list-items component; validation failures replace only the submitted form. Two new-item forms use explicit IDs submitted separately from domain parameters. New forms reset on successful Turbo submission. Notifications manage their own fade/removal.
+Use conventional explicit Rails actions, form_with, Turbo Stream templates, and
+Stimulus for browser behavior. Keep render calls and success/failure branches
+visible in actions; render outside persistence transactions. Prefer find_* for
+resource lookup and load_* for view preparation. Prefer explicit if/else over
+ternaries. Domain validation errors belong in models, including self-invitation
+and already-friend rules. Reused pending invitations must still be validated.
 
-Prefer clear `find_*` resource lookup and `load_*` view preparation. Keep render calls visible in actions. Avoid premature service objects, concerns, authorization frameworks, and generic responders. A little repetition is welcome when it keeps control flow readable. Comments explain concrete failure modes.
+Avoid premature service objects, concerns, authorization frameworks, generic
+responders, and custom-fetch form replacement. A little repetition is welcome
+when it keeps control flow readable. Comments explain concrete failure modes.
 
-The developer has extensive professional Rails experience (since 2006) and is learning Stimulus, Turbo, and Rails system tests. Explain browser lifecycle and testing idioms as work proceeds. Favor meaningful workflow tests and exhaustive server rule coverage over fragile browser test counts.
+Successful item/purchase operations replace the list-items component; validation
+failures replace only the submitted form. The two new-item forms use separate
+UI identities submitted outside domain parameters. New forms reset only after
+success. Notifications handle their own fade/removal.
+
+The developer has professional Rails experience since 2006 and is learning
+Stimulus, Turbo, and system tests. Explain conventions and browser/test behavior.
+Favor meaningful browser workflows and focused server-side invariant tests over
+fragile browser test counts. All email delivery must run in jobs, never block a
+web request. Sender feedback deliberately says sent/resent, not enqueued.
+
+## Friendships
+
+Friendship has requester/recipient users and nullable accepted_at, with a database
+self-friendship check and unordered-pair unique index. One row represents the
+relationship. User#friends is chainable and includes accepted pairs in either
+direction. Existing users are never connected automatically.
+
+Requests use normalized current confirmed email. Unknown/new/duplicate outgoing
+requests receive generic feedback; there is no outgoing-request list. Incoming
+requests identify the requester. Crossed requests require explicit acceptance.
+Only the recipient can accept/decline pending requests; either accepted
+participant can remove friendship. Decline/removal deletes the row without
+history or notification. No blocking, expiration, or transitive friendship.
+
+FriendsController#index is /friends. FriendshipsController handles POST
+/friendships, GET /friendships/requests, PATCH /friendships/:id/accept, and DELETE
+/friendships/:id. Nested browsing/purchases use /friends/:friend_id/lists with
+accepted-friend lookup. Owners use /lists and DELETE
+/lists/:list_id/purchases/:id for revealed purchases. Old /users routes and
+/friends/your-own-name are unavailable.
+
+Friendship forms use targeted streams, preserving unrelated email drafts.
+Crossed requests navigate to incoming requests; HTML fallbacks redirect normally.
+Request/acceptance notification jobs enqueue after commit, skip missing/resolved
+records, and deliver on friendship_notification. Local Mailpit delivery was
+verified; final manual beta and production-worker checks remain in TODO.md.
+
+## Invitations and acceptance
+
+Invitation is separate from User: required inviter/email, optional invitee and
+accepted_at, and timestamps. Email is trimmed/downcased. Database checks require
+invitee/accepted_at together and distinct participants. A partial unique index
+permits one pending invitation per inviter/normalized email, with independent
+invitations from different senders and accepted history. Deleting either user
+deletes associated invitations without deleting another account.
+
+Every confirmed user may invite. Self/already-friend invitations are errors;
+otherwise existing and unknown accounts produce consistent sender feedback and
+listings. Recipient email wording distinguishes registration from sign-in and
+explains friendship consent/removal. Sending creates neither user nor friendship.
+Invitations and friend requests remain separate workflows.
+
+Authenticated /invitations supports index/create, POST /invitations/:id/resend,
+and DELETE cancellation, all scoped to the sender. Duplicate create reuses a
+pending row without resending; explicit resend reuses its token. Cancel deletes
+only a pending invitation. Accepted history has no mutation controls. Resend and
+cancel recheck pending state under lock. Uniqueness conflicts recover the
+existing row.
+
+Acceptance uses purpose-scoped, non-expiring Rails signed IDs. Tokens appear in
+recipient links, never the sender dashboard. Missing/malformed/wrong-purpose,
+cancelled, or consumed tokens return 404. Reinvitation never reactivates an old
+link. Referrer-Policy: no-referrer and Cache-Control: no-store protect token pages;
+parameters are filtered from logs.
+
+GET /invitation is read-only. POST /invitation performs explicit acceptance;
+legacy GET/POST /register aliases enforce the same token requirement. New users
+choose username/password; email is bound server-side. Signup confirms that email
+without a second confirmation message. Existing confirmed accounts must sign in
+normally and explicitly accept. Wrong-account users POST to
+/invitation/switch-account, then sign in and return through a stored internal
+location. Successful acceptance clears the stored location.
+
+Existing unconfirmed accounts require valid credentials through Devise's
+valid_for_authentication? and valid_password? checks, preserving lockout behavior,
+then confirmation and active_for_authentication? eligibility. A pending
+unconfirmed_email grants no authority and is not confirmed here. Invitation
+possession alone never authenticates an existing account or resets its password.
+An account appearing after user-lock selection requires a fresh submission.
+
+The acceptance transaction locks users in ID order, then invitation, then an
+existing friendship. Account/confirmation, friendship, and invitation changes
+roll back together. A new friendship uses inviter/requester and invitee/recipient;
+existing pair direction and accepted timestamps are preserved. Only this sender
+becomes a friend; other invitations remain pending. Removing friendship cannot
+reactivate an accepted invitation.
+
+Desktop/mobile Invitations links lead to an index with email/status and empty
+state. The invitation-form and invitations DOM targets support targeted streams:
+create/duplicate success resets the form and refreshes history; invalid create
+replaces only the form with preserved input; resend appends a notification;
+cancellation refreshes history without touching a draft; failure only appends an
+error. Email-specific accessible button names and Turbo confirmation are used.
+
+## Email and setup
+
+All delivery occurs in Active Job after commit. InvitationNotificationJob loads
+current pending state by ID, selects existing/new-account wording at execution,
+and generates the link inside the job. It uses invitation_notification. New
+signup additionally enqueues RegistrationNotificationJob and
+RegistrationWelcomeJob once. Existing-account acceptance sends neither those
+jobs nor duplicate friendship notifications. All Devise notifications use
+deliver_later after commit, including unlock mail, on the default queue.
+
+Development uses the async in-process adapter and Mailpit; queued work is lost on
+restart. Production uses Solid Queue. config/queue.yml consumes all queues;
+run a worker via RAILS_ENV=production bin/jobs or SOLID_QUEUE_IN_PUMA=1. Production
+mail/URL/sender settings remain placeholders. The production primary database key
+is currently misspelled daTabase; correct it before deployment. No hosting setup
+or live-worker verification has been completed.
+
+README.md contains the Docker environment example and console bootstrap. Create
+the first User using normal validations and skip_confirmation! before save!;
+password prompts suppress terminal input and console echo. No bootstrap task is
+implemented or required. Existing accounts need no retrospective invitation.
+Automatic invitations from friend-request forms, expiration, resend token
+rotation, delivery tracking, invitation limits, and invitation-acceptance emails
+remain deliberately out of scope for beta.
 
 ## Development and verification
 
-Docker Compose on both Fedora (ThinkPad) and Ubuntu/WSL. Rails runs in `web`, PostgreSQL in `db`, and remote Firefox in `selenium` under the `system-test` profile. Capybara serves on `web:3001`. Minitest is used; retain the real browser login test and full registration integration flow.
+Docker Compose on Fedora/ThinkPad and Ubuntu/WSL. Rails runs in web, PostgreSQL
+in db, Mailpit in mailpit, and remote Firefox in selenium under the system-test
+profile. Capybara serves on web:3001. The test database is separate. Container
+commands can create root-owned files in the checkout.
 
-The original review findings are fixed and covered by model, request, and browser tests. Creation and reordering lock the relevant parent; purchase update/delete reload and reauthorize after locking the item. Index visible-item counts use a grouped query. Existing purchases can retain or decrease quantity after an owner lowers the requested amount.
+Minitest model/request/job/mailer/integration tests run with rails test. Browser
+tests use rails test:system; test:all includes everything. System tests run
+sequentially because the port/browser service is shared. Non-system tests run in
+parallel above the configured threshold when invoked separately. Retain real
+browser login and the complete invitation-email/registration/welcome/login flow.
 
-## Friendship progress and routes
+Last application verification: 362 tests, 1,739 assertions, all passing, with
+RuboCop and whitespace checks passing. Invitation section 6's automated audit is
+complete. Race tests use deterministic competing-change simulations and database
+constraints, not simultaneous-connection stress tests. Coverage includes two
+independent invitations across signup, invalid/consumed tokens, access revocation,
+confirmation rollback, notification commit timing, and mail failure.
 
-Friendship has requester/recipient users and nullable accepted_at, with a database check against self-friendship and an unordered-pair unique index. User#friends is a chainable relation covering accepted friendships in either direction. Existing users are never connected automatically; tests create relationships explicitly.
-
-The request lifecycle and basic pages are implemented: normalized confirmed-email lookup, generic responses for unknown/new/duplicate outgoing requests, explicit acceptance for crossed requests, recipient-only acceptance/decline, and either-party removal. No outgoing-request list, user directory, or automatic crossed-request acceptance. Request and acceptance emails enqueue after commit from FriendshipsController and deliver only inside dedicated background jobs on the friendship_notification queue. Jobs take a friendship ID and skip deleted or inapplicable records. Duplicate outgoing requests and repeated acceptance do not enqueue extra notifications. Local async-job delivery to Mailpit is verified; production worker verification remains hosting work. Friendship forms now use Turbo Stream templates: creation resets only the email form, validation replaces that form with preserved input and an inline error, and acceptance/removal refresh friend and incoming-request collections without clearing email drafts. All stream responses append the existing transient notifications. Crossed requests deliberately redirect to incoming requests; HTML fallbacks retain conventional redirects.
-
-FriendsController#index uses /friends. FriendshipsController handles POST /friendships, GET /friendships/requests, PATCH /friendships/:id/accept, and DELETE /friendships/:id. Nested list/purchase routes use /friends/:friend_id/lists with accepted-friend lookup. Old /users routes are removed; /friends/your-own-name and profile pages are intentionally unavailable. Owners use /lists and DELETE /lists/:list_id/purchases/:id for revealed purchases, including on private lists.
-
-Invitation-only signup is implemented. Acceptance establishes friendship with the inviter, with explicit consent wording. See TODO.md for the full agreed plan and remaining work.
-
-Friendship coverage audit: automated section 6 coverage is complete. Added constant-query friend-index checks, pending/unrelated access denial despite purchase history, deterministic uniqueness-conflict recovery, acceptance commit timing, both participant-deletion state/direction combinations, and a two-user browser workflow following job-delivered email links. The full suite passed with 291 tests and 1,175 assertions. A final manual two-user browser/Mailpit beta walkthrough and live production-worker verification remain unchecked in TODO.md. No application changes were needed for this audit.
-
-Invitation implementation (2026-10-24): separate Invitation schema/model and tests are complete. Authenticated /invitations supports owner-scoped index/create, POST /invitations/:id/resend, and DELETE cancellation. Create normalizes email, rejects self/accepted friends, and reuses pending duplicates without sending again; uniqueness conflicts recover the existing row. Resend/cancel recheck pending state under a row lock. Creation/resend enqueue InvitationNotificationJob after commit on invitation_notification; all delivery is in that job, with existing/new account wording selected at execution. GET /invitation?token=... validates a purpose-scoped, non-expiring signed ID and pending state, is read-only, and disables caching/referrers. Section 3 subsequently implemented acceptance and invitation-gated signup (see below). Invitation navigation and targeted Turbo streams were subsequently completed in section 5 (see below). Tokens never appear on the sender dashboard.
-
-Invitation acceptance (2026-10-26): GET/POST /invitation and legacy /register aliases require a valid pending invitation. GET is read-only; POST creates a confirmed account or accepts for an authenticated matching account. Existing unconfirmed accounts must pass Devise valid_for_authentication?/password checks, including lockout, before confirmation; pending unconfirmed_email never grants account authority and is not confirmed by this flow. Wrong-account recipients use POST /invitation/switch-account, normal login, and a stored internal return URL. Successful acceptance clears that stored URL. User rows lock in ID order, then invitation, then existing friendship; account/friendship/invitation writes roll back together. New friendships use inviter/requester; existing pair direction and acceptance timestamps are preserved. Other invitations remain pending. Existing-account acceptance sends no new-account/friendship notifications; new signup enqueues registration/admin and welcome jobs only after commit, with no redundant confirmation email. All Devise notifications now use deliver_later after commit too, including unlock mail triggered by failed invitation credentials. Removed unrestricted signup navigation and the obsolete custom RegistrationsController; request tests cover the /register aliases. Sender feedback retains the user's sent/resent wording. Three Firefox workflows cover email-driven signup/validation/browsing, account switching and explicit acceptance, and unconfirmed-account acceptance. Section 5 subsequently added navigation and targeted invitation-management Turbo streams; manual Mailpit verification remains later work.
-
-Invitation UI/Turbo (2026-10-29): section 5 is complete. Authenticated desktop/mobile navigation links to Invitations. Separate invitation-form and invitations DOM targets support targeted Turbo responses: create/duplicate success clears only the invitation form and refreshes history; invalid create replaces only that form with preserved email and errors; resend appends a notification only; successful cancellation refreshes history/empty state without touching an email draft; failed cancellation only appends an error notification. Conventional HTML redirects/rendering remain. Resend/cancel controls have email-specific accessible names, cancellation uses Turbo confirmation, and accepted history has no action controls. Request and Firefox tests cover these behaviors. Manual Mailpit verification and the section 6 coverage audit remain.
-
-Invitation coverage audit (2026-10-29): automated section 6 items are complete. Added a Firefox workflow registering through one invitation and explicitly accepting another sender afterward; request regressions for cancelled/consumed POST tokens, friendship removal not reactivating invitations, rollback of unconfirmed-account confirmation, and consumed-state rechecking under lock; job checks now create an account between invitation creation and delivery, verify sender/removal wording, and exercise delivery failure without changing invitation state. No application changes were necessary. Race coverage uses deterministic simulations and database constraints rather than simultaneous-connection stress tests. Full suite: 362 tests, 1,739 assertions, all passing; RuboCop and whitespace checks pass. The manual two-browser/Mailpit beta walkthrough remains unchecked, as does local Mailpit verification in section 4.
+Invitation documentation (section 7) is complete. Manual two-browser/Mailpit
+walkthroughs and invitation SMTP verification remain unchecked, alongside live
+production-worker verification. Documentation changes did not rerun the suite.
