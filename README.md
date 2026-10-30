@@ -230,6 +230,15 @@ docker compose exec web bundle exec rubocop
 docker compose logs -f selenium
 ```
 
+## Production image
+
+Build with `docker build -f Dockerfile.production -t wishlist:production-check .`.
+The image runs Puma as a non-root user on port 3000 and also supports `./bin/jobs`
+for the separate worker. Database preparation is an explicit deployment step.
+See [production image checks](docs/production-image.md) for build behavior, local
+verification, and isolated compatibility checks for the older droplet. Deployment
+configuration and actual-host compatibility remain work in progress.
+
 ## Before the family beta
 
 Deployment/hosting is still to be decided. The development Compose file is not

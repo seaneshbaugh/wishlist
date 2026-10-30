@@ -156,8 +156,7 @@ deliver_later after commit, including unlock mail, on the default queue.
 Development uses the async in-process adapter and Mailpit; queued work is lost on
 restart. Production uses Solid Queue. config/queue.yml consumes all queues;
 run a worker via RAILS_ENV=production bin/jobs or SOLID_QUEUE_IN_PUMA=1. Production
-mail/URL/sender settings remain placeholders. The production primary database key
-is currently misspelled daTabase; correct it before deployment. No hosting setup
+mail/URL/sender settings remain placeholders. The production primary database key has been corrected to database. No hosting setup
 or live-worker verification has been completed.
 
 README.md contains the Docker environment example and console bootstrap. Create
@@ -191,3 +190,69 @@ confirmation rollback, notification commit timing, and mail failure.
 Invitation documentation (section 7) is complete. Manual two-browser/Mailpit
 walkthroughs and invitation SMTP verification remain unchecked, alongside live
 production-worker verification. Documentation changes did not rerun the suite.
+
+## Beta hosting decisions and recovered droplet
+
+Deployment is planned, not implemented. Preserve Rancher Machine and remote
+builds; Wishlist should be a git submodule in dynamic_sites and contribute web,
+dedicated PostgreSQL, and separate queue-worker services through that repo's
+root Compose entry point. Existing Nginx/Certbot serves the new domain.
+The purchased domain is mywishlist.top; familywishlist.com is obsolete.
+Resend is now selected: Namecheap forwarding for admin@mywishlist.top works,
+SMTP2GO signup failed even with that alias, and Resend accepted it. The domain
+is verified in Resend. A Python SMTP test from the droplet succeeded using
+smtp.resend.com:2587 with STARTTLS; the message arrived outside spam. Rails and
+worker delivery still need verification.
+Use wishlist@mywishlist.top as the unmonitored sender, with
+replies intended to bounce. Runtime secrets remain untracked and in 1Password.
+Admin notification recipient must be decoupled from the sender before changing
+DEVISE_MAILER_SENDER to a non-receiving address. Monitoring should be free, alert
+personal email, and check website availability about every five minutes; an
+external worker heartbeat is proposed. Automated backups are explicitly deferred
+for beta with accepted potential data loss, then prioritized with infrastructure
+maintenance. Spaces is available for future backups, not live PostgreSQL files.
+
+The existing dynamic-sites droplet has 2 vCPUs/4 GB RAM/80 GB disk, with an idle
+snapshot of 2.2 GB available memory. Ubuntu 16.04.6/kernel 4.4.0-210 and Docker
+19.03.2/API 1.40 require a real compatibility test before deploying modern
+images. Local Rancher Machine v0.15.0-rancher131, Compose 2.38.2, and Docker client
+28.3.2 now connect successfully to the remote daemon after certificate renewal.
+The user permits reading dynamic_sites and static_sites; write authorization for
+those repos has not been granted. Do not mutate remote Docker or other projects
+merely because the user's deployment shell points there.
+
+Disk recovery was performed by the user over SSH: plain docker image prune
+reported 10.1 GB reclaimed, then deletion of old regular /tmp/magick-* and
+/tmp/RackMultipart* files in the spritesheet container reduced /tmp from 20.3 GB
+to 44 KB. Host now has about 41 GB free/49% used; spritesheet writable layer is
+about 8.85 MB. Its application log was only 8.4 MB. Old OverlayFS device IDs made
+du -x undercount; inspect ordinary container directories without -x. Docker JSON
+logs still occupy about 10.6 GB. Do not assume bot activity or a proven cleanup
+bug from the old files alone. Certificate renewal coincided with Docker restart;
+web apps lacked restart policies and were started manually. User confirms all
+existing sites work again. Automatic disk cleanup, logging fixes, and broad
+host/runtime upgrades are deferred until immediately after Wishlist is running.
+The detailed ordered deployment and post-beta infrastructure plans are in TODO.md.
+
+## Production image progress
+
+Dockerfile.production is now a multi-stage Ruby 4.0.6 slim-bookworm image with
+non-root UID/GID 1000, development/test gems excluded, single-job compilation,
+Bootsnap/assets precompiled, and Puma on internal port 3000. Nginx stays the
+public proxy; Thruster is not started. No automatic database migration entrypoint
+is configured; deployment will explicitly run db:prepare before web/worker.
+The legacy bin/docker-entrypoint remains in the tree but is not used by this
+image. Runtime secrets are not copied into the build. .dockerignore also excludes
+local .aws/.codex/.agents and the submodule .git file.
+
+Build-only fake database/test settings satisfy database.yml's eager ENV.fetch
+evaluation; they do not persist as runtime ENV defaults. Runtime configuration
+still needs to address the cross-environment test-variable requirement. Local
+Docker Desktop 28.3.2 verification succeeded: about 232 MB image, UID 1000,
+OpenSSL/pg/libvips/Ruby threads, selected private-path/gem exclusions, production
+Rails boot without networking, HTTP 200 for /up and compiled CSS, and bin/jobs
+--help. PostgreSQL 18.4-bookworm image/version also verified locally. Disposable
+web container was removed. No application tests rerun for image-only changes.
+The old remote daemon/kernel have NOT been tested by the assistant; user-facing
+isolated check commands and limitations are in docs/production-image.md. Do not
+mark actual-host compatibility or resource-peak measurement complete yet.

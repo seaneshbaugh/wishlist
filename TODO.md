@@ -29,8 +29,9 @@
 - [x] Add invitation-only signup and invitation acceptance for existing users (manual Mailpit/beta checks remain below).
 - [ ] Implement revealed purchase details/anonymous attribution and owner deletion controls if desired; current owner UI displays only purchased quantities.
 - [x] Improve README setup documentation for Docker on Fedora and Ubuntu/WSL.
-- [ ] Decide deployment and hosting for the family beta.
-- [ ] Correct `production.primary.daTabase` to `database` in `config/database.yml` before deployment; production mail sender/URL/SMTP placeholders also need configuration (documented in README).
+- [x] Choose the existing dynamic-sites DigitalOcean droplet and Rancher Machine workflow for beta (deployment plan below).
+- [x] Correct the production primary database key to `database` in `config/database.yml`.
+- [ ] Configure production mail sender/URL/SMTP settings as part of the deployment plan below.
 
 ## Friendships: agreed behavior and implementation plan
 
@@ -201,6 +202,85 @@ The basic mailer/job was implemented with section 2 so create/resend queue real 
 - [x] Document invitation-only signup, independent invitations, confirmation on acceptance, cancellation, and background-worker requirements in README/project context.
 - [x] Document console-based creation of the first confirmed user using normal validations. Existing accounts remain valid without retrospective invitations. An interactive bootstrap rake task is optional later work, not a prerequisite for this feature.
 - [x] Keep automatic invitations from friend-request forms, token rotation on resend, expiration, delivery tracking, invitation-acceptance notification emails, and invitation limits out of scope for beta.
+
+## Family beta: production deployment
+
+### Agreed scope and current host
+
+- Deploy Wishlist before broader infrastructure changes if a contained compatibility test succeeds. Immediately after deployment, prioritize host/runtime upgrades and infrastructure maintenance. If compatibility cannot be resolved reasonably through configuration, revisit the host upgrade before beta.
+- Keep Rancher Machine and remote image builds. Add Wishlist as a git submodule under `dynamic_sites/sites/wishlist`, alongside existing sites. `dynamic_sites/docker-compose.yml` remains the deployment entry point and shows the web, dedicated PostgreSQL, and separate Solid Queue worker services. Reference the submodule's production Dockerfile directly; no symlink is needed.
+- Prefer three explicit service definitions in the parent Compose file for beta. Local Compose 2.38.2 supports include if later useful; inclusion must preserve predictable build/env paths and the parent entry point. Avoid parallel configuration sources that drift.
+- Use the existing Nginx/Certbot proxy for HTTPS. The purchased domain is `mywishlist.top`; replace the former familywishlist.com placeholder in deployment settings.
+- Use Resend's free plan (SMTP2GO signup failed). Send all application and Devise mail from `Wishlist <wishlist@mywishlist.top>`; no monitored inbox, and replies should bounce. Verify the incoming DNS arrangement without adding null MX to the sending domain, which can harm outbound acceptance.
+- Expect approximately 9–10 users and little concurrent traffic. Short deployment downtime is acceptable. Keep production secrets in 1Password and untracked runtime environment files. No new paid monitoring service.
+- Automated backups are explicitly deferred for beta: the user accepts potential data loss and will communicate this to family. Persistent storage is still required. Existing Spaces storage is available for the later backup project.
+
+### 0. Host recovery completed
+
+- [x] Inspect droplet capacity: 2 vCPUs, 4 GB RAM, 80 GB disk; observed 2.2 GB available memory and mostly idle CPUs. No additional droplet needed on capacity evidence alone; measure actual build/runtime usage before concluding fit.
+- [x] Identify the compatibility baseline: Ubuntu 16.04.6, kernel 4.4.0-210, Docker 19.03.2/API 1.40, containerd 1.2.6. Local Rancher Machine is v0.15.0-rancher131; Docker client 28.3.2 negotiates down to API 1.40.
+- [x] Recover disk space using plain `docker image prune` and deletion of old, regular `/tmp/magick-*` and `/tmp/RackMultipart*` files in spritesheet. After cleanup, `/tmp` is 44 KB, spritesheet's writable layer is about 8.85 MB, and the droplet has about 41 GB available (49% used).
+- [x] Regenerate expired client certificates and verify the remote Docker connection. Certificate regeneration coincided with a daemon restart; existing web apps required manual startup because they lack restart policies. User confirms all existing sites are working again.
+- Docker-managed JSON logs still occupy roughly 10.6 GB, mainly the three Rails apps and Nginx. Rotation and further cleanup are deferred to the infrastructure work; do not silently modify Docker's log files or remove volumes.
+
+### 1. Production image and compatibility gate
+
+- [x] Review and finish Wishlist's `Dockerfile.production`: explicit production base, non-root runtime, precompiled assets, development/test gems excluded, and no secrets in the image/build arguments. Keep the submodule as build context so its `.dockerignore` excludes local credentials.
+- [x] Ensure asset precompilation works without a production database or production secrets, including configuration that currently uses ENV.fetch. Use build-only non-secret placeholders where needed rather than leaking runtime settings into image layers.
+- [ ] After reviewing exact commands, test the Ruby/PostgreSQL images and production build on the actual old daemon/kernel with isolated disposable resources. Keep existing services untouched. Account for the existing classic-builder workflow (`DOCKER_BUILDKIT=0`) and investigate concrete compatibility errors before changing host configuration.
+- [ ] Measure peak build memory/disk and runtime memory. Keep concurrency modest; do not treat the idle snapshot as a build-capacity guarantee. If compatibility fails beyond a reasonable configuration fix, discuss a supported host/runtime before proceeding.
+- [ ] Keep the last deployed image/commit available for a simple code rollback. Do not introduce registry/CI or remote-build workflow changes for beta.
+
+Local image verification is documented in `docs/production-image.md`: build succeeded on Docker Desktop 28.3.2, UID 1000/native libraries/threads checked, Rails production boot and precompiled CSS returned HTTP 200 without network/database access, and Solid Queue CLI loads. Image size is about 232 MB. Actual old-host build/runtime compatibility and resource peaks remain unchecked. Runtime database configuration still evaluates test ENV.fetch entries; address this in runtime setup rather than assuming build placeholders are production defaults.
+
+### 2. Parent Compose integration and persistence
+
+- [ ] Add the Wishlist submodule and web/db/worker service definitions to dynamic_sites, with production env_file paths read by the local deployment client and the Dockerfile resolved from the submodule context. Changes to that repo require write authorization; only read access has been granted so far.
+- [ ] Build one application image and use it for both web and worker (`bin/jobs`); leave SOLID_QUEUE_IN_PUMA disabled when the separate worker runs. Consume all required queues, including Devise's default queue and registration/friendship/invitation queues.
+- [ ] Pin Wishlist's PostgreSQL major/version and give it its own named data volume, container, credentials, and databases. Use the PostgreSQL 18 volume location correctly. Primary/queue/cache/cable databases share this one dedicated instance. Do not upgrade or recreate the other sites' PostgreSQL services.
+- [ ] Keep the database port unpublished; let Nginx reach the web service through the parent stack's networking. Do not publish another host port 80/443. Keep development bind mounts, Mailpit, Selenium, and development commands out of production.
+- [ ] Add restart policies for all three Wishlist services. Add explicit health checks compatible with the actual daemon. Verify recreation preserves database data and document that volumes are persistence, not backups.
+- [ ] Start with one modest Puma process and one queue worker process with a small thread count. Keep required queue maintenance running; tune using measured memory/connection usage rather than adding concurrency for ten users.
+
+### 3. Runtime settings, domain, and SMTP
+
+- [x] Purchase the domain: `mywishlist.top`.
+- [ ] Use `mywishlist.top` consistently in DNS, Nginx, Rails URL/host settings, and email senders. Configure the existing proxy/Certbot for its certificate and forwarded HTTPS headers; let the Wishlist image serve precompiled assets.
+- [ ] Generate/store stable production signing secrets in 1Password. Supply SECRET_KEY_BASE and any required RAILS_MASTER_KEY consistently to web/worker at runtime, using untracked files with restricted permissions. Preserve signing material across rebuilds so outstanding invitations continue working.
+- [x] Resolve SMTP provider signup: admin@mywishlist.top forwards to personal email; SMTP2GO rejected signup, but Resend account creation succeeded.
+- [x] Create the Resend account and verify sending-domain DNS for mywishlist.top, preserving Namecheap forwarding records.
+- [ ] Verify replies to the unmonitored sender bounce as intended. Resend outbound SMTP does not provide an inbound mailbox by itself.
+- [x] Test Resend SMTP directly from the droplet: Python authenticated with STARTTLS on smtp.resend.com:2587 and sent wishlist@mywishlist.top mail to the user's inbox (not spam).
+- [ ] Configure Resend SMTP credentials, authentication, connection timeouts, and application/Devise senders through Rails runtime configuration. Direct SMTP success does not yet verify Rails/worker delivery.
+- [ ] Separate the existing registration-notification recipient setting from DEVISE_MAILER_SENDER: changing the sender to wishlist@domain must not disable admin notifications or send them to an address intended to reject mail. Use the user's personal email for operational notifications.
+- [ ] Verify real worker-delivered invitations, welcome, password recovery, and friendship notifications with appropriate recipients. Test bounce/no-reply behavior and avoid exposing secrets in shared diagnostic output.
+
+### 4. Deployment sequence and beta verification
+
+- [ ] Write the precise Rancher Machine deployment commands and verify Docker's server identifies the droplet before mutations. Limit build/start/recreate commands to Wishlist and the necessary proxy change, rather than rebuilding the whole aging stack.
+- [ ] Document database readiness and a one-off production db:prepare/migration step before starting the worker. Avoid simultaneous web/worker migration attempts. Keep the first-user console bootstrap and normal validations from README.
+- [ ] Smoke-test the production image/configuration with isolated test data and confirm restart/health behavior before inviting family.
+- [ ] Deploy, confirm HTTPS/static assets/login and database/worker readiness, and complete a new-user plus existing-user invitation flow. Check private/friends lists, purchase/reveal behavior, independent invitations, cancelled links, and friendship removal. Confirm the existing websites remain functional.
+- [ ] Recheck droplet disk, memory, and load during/after build. Record the deployed submodule commit/image, secrets locations, commands, and rollback procedure. Mark the applicable outstanding manual/live-worker checks elsewhere in this TODO only after performing them.
+
+### 5. Minimal free monitoring
+
+- [ ] Choose a free external HTTPS monitor with personal-email alerts, checking about every five minutes. No paid Sentry/Grafana setup for beta. Distinguish external DNS/TLS/proxy reachability from the container being alive.
+- [ ] Use /up for basic Rails availability and decide a small readiness check for required databases. PostgreSQL should have a readiness check. Do not expose connection details or user data in health responses.
+- [ ] Monitor actual queue processing with a periodic queued heartbeat to a free external service, such as Healthchecks.io, and surface failed email jobs. Alert delivery should not depend solely on Wishlist's own SMTP path.
+- [ ] Document status/log inspection and manual recovery. A Docker unhealthy status alone does not trigger its restart policy; do not imply automatic recovery that has not been configured and tested.
+
+## Immediately after beta deployment: infrastructure upgrades and maintenance
+
+This is the next high-priority project after Wishlist is running, not optional long-term polish. Preserve the user's current deployment workflow for beta; plan the infrastructure transition separately.
+
+- [ ] Move to a supported host OS, kernel, Docker/container runtime, and compatible Rancher Machine/client workflow. Plan migration/recovery before altering the only running host; Ubuntu 16.04 is beyond ESM without Legacy coverage.
+- [ ] Introduce automated database backups to storage off the droplet, potentially the existing DigitalOcean Space, and test restoration. Cover the other database sites as well as Wishlist, and retain recovery secrets in 1Password.
+- [ ] Add automatic disk monitoring and bounded cleanup. Document the verified image-pruning and targeted temporary-file cleanup commands, with their effects and the distinction between host Docker storage and application temporary files. Never use routine volume pruning as a disk-management policy.
+- [ ] Configure bounded Docker stdout/stderr logs for existing services and recreate them deliberately to apply the settings. Handle Nginx/application file logs separately; Docker log limits do not rotate those files.
+- [ ] Investigate spritesheet's historical ImageMagick scratch-file and Rack-upload retention, fix cleanup/resource limits, and add an age-based safety sweep where appropriate. The 2022 magick files do not establish ongoing bot activity; do not assert an unconfirmed cause.
+- [ ] Add restart policies to the existing web apps and verify recovery after a daemon restart. Inspect proxy startup behavior when upstreams are temporarily unavailable.
+- [ ] Review remote build peaks, retained images/rollback history, log retention, and monitoring across both droplets. Consider registry/local-build changes later rather than expanding the beta deployment task.
 
 ## Deliberate choices to retain
 

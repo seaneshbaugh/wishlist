@@ -1,8 +1,13 @@
 # See https://docs.docker.com/engine/reference/builder/#dockerignore-file for more about ignoring files.
 
 # Ignore git directory.
-/.git/
+/.git
 /.gitignore
+
+# Local tooling and credential directories do not belong in the image.
+/.aws
+/.codex
+/.agents
 
 # Ignore bundler config.
 /.bundle
