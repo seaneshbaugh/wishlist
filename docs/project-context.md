@@ -236,7 +236,7 @@ The detailed ordered deployment and post-beta infrastructure plans are in TODO.m
 
 ## Production image progress
 
-Dockerfile.production is now a multi-stage Ruby 4.0.6 slim-bookworm image with
+Dockerfile.production is now a multi-stage Ruby 4.0.6 alpine3.24 image with
 non-root UID/GID 1000, development/test gems excluded, single-job compilation,
 Bootsnap/assets precompiled, and Puma on internal port 3000. Nginx stays the
 public proxy; Thruster is not started. No automatic database migration entrypoint
@@ -248,7 +248,7 @@ local .aws/.codex/.agents and the submodule .git file.
 Build-only fake database/test settings satisfy database.yml's eager ENV.fetch
 evaluation; they do not persist as runtime ENV defaults. Runtime configuration
 still needs to address the cross-environment test-variable requirement. Local
-Docker Desktop 28.3.2 verification succeeded: about 232 MB image, UID 1000,
+Docker Desktop 28.3.2 Alpine verification succeeded: about 168 MB image, UID 1000,
 OpenSSL/pg/libvips/Ruby threads, selected private-path/gem exclusions, production
 Rails boot without networking, HTTP 200 for /up and compiled CSS, and bin/jobs
 --help. PostgreSQL 18.4-bookworm image/version also verified locally. Disposable
@@ -256,3 +256,35 @@ web container was removed. No application tests rerun for image-only changes.
 The old remote daemon/kernel have NOT been tested by the assistant; user-facing
 isolated check commands and limitations are in docs/production-image.md. Do not
 mark actual-host compatibility or resource-peak measurement complete yet.
+
+Actual-host compatibility update: the user attempted Ruby base-image startup on
+the droplet, but Docker 19.03.2 rejected the OCI manifest during pull, before Ruby
+ran. A local Buildx type=docker/provenance=false export was verified to contain
+amd64 Docker schema-2 media type and the original Ruby tag. Archive:
+/tmp/wishlist-ruby-base-docker.tar, 80,793,088 bytes. The user successfully loaded
+it through the remote Docker API and retried Ruby/threads. This is a base-image
+format workaround; remote
+application builds can stay on the existing classic builder using the loaded tag.
+See docs/production-image.md for reproduction commands; PostgreSQL may need the
+same treatment. Do not interpret successful local export as old-kernel success.
+
+Ruby compatibility update: remote Docker archive load succeeded. The user ran
+Ruby 4.0.6/OpenSSL 3.0.20 on the old droplet, but Thread.new failed with
+"Operation not permitted". An isolated seccomp-disabled test succeeded,
+confirming the default seccomp profile is the immediate blocker. The suspected
+mechanism is EPERM for clone3 preventing glibc's ENOSYS fallback. The old runc
+cannot express arbitrary errno responses for a narrow modern compatibility
+profile. Do not carry seccomp=unconfined into production services.
+
+The user then successfully tested Ruby 4.0.6 on Alpine 3.24.1 (musl) with default
+seccomp enabled on the droplet, including OpenSSL 3.5.7 and thread creation.
+Dockerfile.production now uses ruby:4.0.6-alpine3.24, apk dependencies, Alpine
+user/group creation and /usr/lib/libjemalloc.so.2. libpq-dev avoids installing
+the PostgreSQL server development package and its LLVM dependencies in builds.
+The release-specific tag resolves to the exact tested image (index digest
+sha256:6ec7aeb4f3f0b67a21fb73a83fc20a4055696e64b933229f68ec805a3de38fcc).
+The Alpine archive /tmp/wishlist-ruby-alpine-docker.tar was regenerated with the
+ruby:4.0.6-alpine3.24 tag (50,076,672 bytes); the user should load it again so the
+remote classic builder finds the tag used by the Dockerfile. Local Alpine build,
+Rails/native-library/user checks, worker CLI and HTTP checks passed. Full remote
+application build/runtime and PostgreSQL compatibility remain open.

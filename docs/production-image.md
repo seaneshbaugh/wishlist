@@ -1,9 +1,10 @@
 # Production image and compatibility check
 
 `Dockerfile.production` builds the image shared by the future web and Solid Queue
-worker services. It uses Ruby 4.0.6 on Debian Bookworm, matching the application's
-Ruby version while selecting an explicit distribution rather than a moving slim
-tag. This does not guarantee compatibility with the old droplet's kernel/runtime.
+worker services. It uses Ruby 4.0.6 on Alpine 3.24, matching the application's
+Ruby version and selecting an explicit Alpine release. The user confirmed that
+this base image creates threads on the old droplet with default seccomp enabled.
+Full application and PostgreSQL compatibility still need remote verification.
 
 The image:
 
@@ -46,9 +47,10 @@ settings. The production configuration and SMTP settings are a separate next ste
 
 ## Local verification completed
 
-The image was built on Docker Desktop 28.3.2, Linux x86_64. Docker reports an image
-size of 231,710,792 bytes (approximately 232 MB). With disposable, network-isolated
-containers and fake settings:
+The Alpine image was built on Docker Desktop 28.3.2, Linux x86_64. Docker reports
+168,087,970 bytes (approximately 168 MB), compared with approximately 232 MB for
+the original Bookworm image. With disposable, network-isolated containers and
+fake settings, the Alpine checks passed:
 
 - Ruby threads, OpenSSL, PostgreSQL native bindings, and libvips loaded.
 - Execution used UID 1000.
@@ -56,6 +58,7 @@ containers and fake settings:
 - Rails 8.1.3.1 booted in production with Solid Queue configured and assets present.
 - Puma returned HTTP 200 for `/up` and a precompiled stylesheet, using HTTPS proxy
   headers. The web container published no host ports and was removed afterward.
+- `./bin/jobs --help` loaded successfully without database access.
 
 These checks did not use a production database, send email, run the queue worker
 against a database, or establish compatibility with the remote host.
@@ -86,7 +89,85 @@ not initialize or start a database and is not a full PostgreSQL startup test.
 Capture any failure before trying alternative security/runtime settings. Do not
 change the daemon configuration or disable its security profile as a blanket fix.
 
-If both checks pass, build the application image on the droplet using the existing
+### If the old daemon rejects an OCI manifest
+
+The actual Ruby pull failed on Docker 19.03.2 before Ruby started, reporting that
+it expected application/vnd.docker.distribution.manifest.v2+json but received
+application/vnd.oci.image.manifest.v1+json. This tests image-format compatibility,
+not Ruby/kernel compatibility.
+
+A local Buildx Docker-format export succeeded. The resulting amd64 archive is
+`/tmp/wishlist-ruby-base-docker.tar` (about 81 MB), tagged
+`ruby:4.0.6-slim-bookworm`; its embedded manifest is Docker schema 2. The user successfully loaded it on the old daemon. Ruby and OpenSSL started,
+but Thread.new then failed with Operation not permitted. Repeating the test with
+seccomp=unconfined succeeded, confirming the default seccomp profile blocks
+thread creation. This was a diagnostic, not a production security setting.
+No remote changes were
+made by the assistant.
+
+To regenerate that archive on local Docker Desktop (verify that `default` really
+points to the local daemon):
+
+```sh
+docker --context default info --format 'Name={{.Name}} Version={{.ServerVersion}}'
+mkdir -p /tmp/wishlist-base-export-context
+printf '%s\n' 'FROM ruby:4.0.6-slim-bookworm' > /tmp/wishlist-base-export-context/Dockerfile
+docker --context default buildx build --platform linux/amd64 --provenance=false \
+  --output type=docker,dest=/tmp/wishlist-ruby-base-docker.tar \
+  --tag ruby:4.0.6-slim-bookworm /tmp/wishlist-base-export-context
+```
+
+Then, in the local deployment shell targeting the droplet, load the local archive
+through the remote Docker API and retry the Ruby check:
+
+```sh
+docker load -i /tmp/wishlist-ruby-base-docker.tar
+docker run --rm --network none ruby:4.0.6-slim-bookworm \
+  ruby -ropenssl -e 'puts RUBY_DESCRIPTION; puts OpenSSL::OPENSSL_VERSION; Thread.new { puts "Ruby thread OK" }.join'
+```
+
+This preserves the image contents while changing the distribution format. The
+same conversion may be needed for PostgreSQL. A subsequent classic application
+build should use the locally loaded Ruby tag; do not add --pull, which would
+retry the incompatible registry manifest. No registry or host upgrade is needed
+for this particular workaround, but old-runtime execution still needs testing.
+
+### Alpine compatibility test
+
+The user successfully ran the isolated thread test on the old droplet with
+default seccomp enabled: Alpine 3.24.1, Ruby 4.0.6 with musl, OpenSSL 3.5.7,
+and `Ruby thread OK`. The production Dockerfile now selects the release-specific
+`ruby:4.0.6-alpine3.24` tag. It resolves to the same image as the tested
+`ruby:4.0.6-alpine` tag (index digest
+`sha256:6ec7aeb4f3f0b67a21fb73a83fc20a4055696e64b933229f68ec805a3de38fcc`).
+
+`/tmp/wishlist-ruby-alpine-docker.tar` has been regenerated with the
+`ruby:4.0.6-alpine3.24` tag (50,076,672 bytes). Load it again on the remote daemon
+so the tag matches the Dockerfile and avoids an incompatible registry pull.
+
+To reproduce the archive on local Docker Desktop:
+
+```sh
+mkdir -p /tmp/wishlist-alpine-export-context
+printf '%s\n' 'FROM ruby:4.0.6-alpine3.24' > /tmp/wishlist-alpine-export-context/Dockerfile
+docker --context default buildx build --platform linux/amd64 --provenance=false \
+  --output type=docker,dest=/tmp/wishlist-ruby-alpine-docker.tar \
+  --tag ruby:4.0.6-alpine3.24 /tmp/wishlist-alpine-export-context
+```
+
+In the local deployment shell targeting the droplet:
+
+```sh
+docker load -i /tmp/wishlist-ruby-alpine-docker.tar
+docker run --rm --network none ruby:4.0.6-alpine3.24 \
+  ruby -ropenssl -e 'puts File.read("/etc/alpine-release"); puts RUBY_DESCRIPTION; puts OpenSSL::OPENSSL_VERSION; Thread.new { puts "Ruby thread OK" }.join'
+```
+
+Keep default seccomp enabled. PostgreSQL compatibility still needs testing.
+
+### Application build after compatibility checks
+
+Once the selected base images pass and the Dockerfile matches them, build the application image on the droplet using the existing
 classic-builder workflow:
 
 ```sh
