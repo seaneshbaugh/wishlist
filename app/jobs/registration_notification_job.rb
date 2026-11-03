@@ -11,6 +11,6 @@ class RegistrationNotificationJob < ApplicationJob
 
   def notification_recipients
     # TODO: Add user roles and select users with admin role.
-    User.where(email: ENV.fetch("DEVISE_MAILER_SENDER"))
+    User.where(email: ENV.fetch("REGISTRATION_NOTIFICATION_EMAIL", "").strip.downcase)
   end
 end

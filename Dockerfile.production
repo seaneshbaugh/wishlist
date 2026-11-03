@@ -36,6 +36,8 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 # settings in the runtime image. Real credentials are supplied at deployment.
 RUN SECRET_KEY_BASE_DUMMY=1 \
     DEVISE_MAILER_SENDER=build@example.invalid \
+    WISHLIST_HOST=build.example.invalid \
+    SMTP_PASSWORD=build-only-placeholder \
     WISHLIST_DATABASE=wishlist_build \
     WISHLIST_DATABASE_USERNAME=build \
     WISHLIST_DATABASE_PASSWORD=build \

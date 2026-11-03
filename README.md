@@ -35,6 +35,8 @@ WISHLIST_TEST_DATABASE_HOST=db
 WISHLIST_TEST_DATABASE_PORT=5432
 
 DEVISE_MAILER_SENDER=owner@example.test
+# Optional: an existing account that receives new-account notifications.
+REGISTRATION_NOTIFICATION_EMAIL=owner@example.test
 ```
 
 Keep the test database separate from development: tests replace its data. The
@@ -169,10 +171,11 @@ execution. Delivery failure does not undo an invitation or friendship.
 
 New invitation registrations enqueue the registration and welcome jobs.
 Acceptance by an existing account sends neither those jobs nor duplicate
-friendship notifications. Currently, new-account notifications go to the user
-whose email matches `DEVISE_MAILER_SENDER`; there is no administrator-role system.
-That setting also controls Devise's sender. Application mailers separately use
-the sender in `app/mailers/application_mailer.rb`.
+friendship notifications. New-account notifications go to the existing user whose
+email matches `REGISTRATION_NOTIFICATION_EMAIL`; leaving it unset or blank
+disables those alerts. There is no administrator-role system. `DEVISE_MAILER_SENDER`
+sets the sender for both Devise and application mailers independently of that
+notification recipient.
 
 Development uses Rails' asynchronous in-process adapter and sends SMTP mail to
 Mailpit. Inspect messages at http://localhost:8025. Restarting Rails can discard
@@ -236,19 +239,23 @@ Build with `docker build -f Dockerfile.production -t wishlist:production-check .
 The image runs Puma as a non-root user on port 3000 and also supports `./bin/jobs`
 for the separate worker. Database preparation is an explicit deployment step.
 See [production image checks](docs/production-image.md) for build behavior, local
-verification, and isolated compatibility checks for the older droplet. Deployment
-configuration and actual-host compatibility remain work in progress.
+verification, and historical compatibility checks for the older droplet. The
+new `dynamicsites-next` host has passed the image build/native checks and
+PostgreSQL startup. See [production setup](docs/deployment/README.md) for the
+Compose examples, required environment settings and ordered deployment commands.
 
 ## Before the family beta
 
-Deployment/hosting is still to be decided. The development Compose file is not
-a complete production deployment configuration. Before deploying:
+Production deployment targets `dynamicsites-next` through the parent
+`dynamic_sites` Compose configuration. The development Compose file is not a
+production deployment configuration. Before inviting users:
 
 - Prepare the primary, cache, queue, and cable databases.
-- Configure production SMTP, an appropriate ApplicationMailer sender,
-  `DEVISE_MAILER_SENDER`, and Action Mailer's real host/protocol. The current
-  production URL host and application sender are placeholders. The production
-  configuration assumes HTTPS behind a TLS-terminating proxy.
+- Supply `WISHLIST_HOST`, `DEVISE_MAILER_SENDER`, `SMTP_PASSWORD` and any SMTP
+  overrides from the production environment example. SMTP defaults to Resend
+  with STARTTLS on port 2587. Set `REGISTRATION_NOTIFICATION_EMAIL` separately
+  if you want new-account alerts. Production assumes HTTPS behind a
+  TLS-terminating proxy; public Nginx/TLS verification remains required.
 - Supply the deployment's Rails credentials/secrets, keeping the signing secret
   stable across restarts so outstanding invitation links remain valid.
 - Verify actual delivery from a live Solid Queue worker.
