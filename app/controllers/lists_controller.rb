@@ -123,7 +123,18 @@ class ListsController < ApplicationController
   end
 
   def load_list_items
-    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
+    @sort = params[:sort] if @list.user != current_user && %w[price_asc price_desc].include?(params[:sort])
+
+    @list_items = @list.list_items.visible_to(current_user).includes(:purchases)
+
+    @list_items = case @sort
+    when "price_asc"
+      @list_items.price_ascending
+    when "price_desc"
+      @list_items.price_descending
+    else
+      @list_items.ordered
+    end
 
     @list_items_by_priority = @list_items.group_by(&:priority)
   end

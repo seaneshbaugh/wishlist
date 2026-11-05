@@ -8,6 +8,8 @@ class ListItem < ApplicationRecord
   }, prefix: true
 
   scope :ordered, -> { order(:priority, :position) }
+  scope :price_ascending, -> { reorder(arel_table[:price].asc.nulls_last, :priority, :position, :id) }
+  scope :price_descending, -> { reorder(arel_table[:price].desc.nulls_last, :priority, :position, :id) }
   scope :visible, -> { where(visible: true) }
   scope :visible_to, ->(user) {
     joins(:list)
