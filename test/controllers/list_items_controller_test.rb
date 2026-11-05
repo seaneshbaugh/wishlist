@@ -8,6 +8,21 @@ class ListItemsControllerTest < ActionDispatch::IntegrationTest
     confirm_and_sign_in @owner
   end
 
+  test "updating an item refreshes the summary through Turbo" do
+    travel_to Time.zone.local(2026, 11, 5, 12) do
+      @list.update_columns(updated_at: 4.days.ago)
+      @list.list_items.update_all(updated_at: 3.days.ago)
+
+      patch list_list_item_path(@list, @item), params: { list_item: { name: "Updated football" } }, as: :turbo_stream
+
+      assert_response :success
+
+      assert_select "turbo-stream[action='replace'][target='list-item-summary'] template" do
+        assert_select "#list-item-summary", text: /3 items.*Updated less than a minute ago/m
+      end
+    end
+  end
+
   test "non-owner cannot create update delete or reorder items" do
     confirm_and_sign_in users(:casie)
 

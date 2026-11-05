@@ -30,10 +30,7 @@
             <%= @list.description %>
           </p>
         <% end %>
-        <p class="mt-4 text-sm text-slate-400">
-          <%= pluralize(@list_items.size, "item") %>
-          · Updated <%= time_ago_in_words(@list.updated_at) %> ago
-        </p>
+        <%= render "lists/item_summary" %>
       </div>
       <% if @list.user == current_user %>
         <div class="flex shrink-0 gap-2">

@@ -1,0 +1,4 @@
+<p id="list-item-summary" class="mt-4 text-sm text-slate-400">
+  <%= pluralize(@list_items.size, "item") %>
+  · Updated <%= time_ago_in_words(@list_items.map(&:updated_at).max || @list.updated_at) %> ago
+</p>

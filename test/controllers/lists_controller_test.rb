@@ -16,6 +16,41 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show uses the latest visible item timestamp rather than the list timestamp" do
+    travel_to Time.zone.local(2026, 11, 5, 12) do
+      @list.update_columns(updated_at: 1.minute.ago)
+      @list.list_items.update_all(updated_at: 3.days.ago)
+      @item.update_columns(visible: false, updated_at: 1.hour.ago)
+      list_items(:lucky_cat).update_columns(updated_at: 2.days.ago)
+
+      get list_path(@list)
+
+      assert_response :success
+      assert_select "#list-item-summary", text: /Updated about 1 hour ago/
+
+      switch_user @viewer
+
+      get friend_list_path(@owner, @list)
+
+      assert_response :success
+      assert_select "#list-item-summary", text: /Updated 2 days ago/
+    end
+  end
+
+  test "show falls back to the list timestamp when no items are visible" do
+    travel_to Time.zone.local(2026, 11, 5, 12) do
+      @list.update_columns(updated_at: 4.days.ago)
+      @list.list_items.update_all(visible: false, updated_at: 1.hour.ago)
+
+      switch_user @viewer
+
+      get friend_list_path(@owner, @list)
+
+      assert_response :success
+      assert_select "#list-item-summary", text: /0 items.*Updated 4 days ago/m
+    end
+  end
+
   test "user reorders lists" do
     confirm_and_sign_in(users(:sean))
 
