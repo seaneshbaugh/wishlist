@@ -1,10 +1,75 @@
 # Production image and compatibility check
 
+## Current deployment target
+
+The user has created `dynamicsites-next` through Rancher Machine and verified
+Docker Engine 29.9.2. Use this new droplet for Wishlist; leave the old server and
+its sites untouched. The old-host tests below are historical troubleshooting,
+not the current deployment procedure. No archive conversion or seccomp workaround
+is planned for the new host.
+
+From the local `dynamic_sites` root in the deployment shell:
+
+```sh
+eval "$(rancher-machine env dynamicsites-next)"
+docker info --format 'Name={{.Name}} Version={{.ServerVersion}}'
+unset DOCKER_BUILDKIT
+docker build -f sites/wishlist/Dockerfile.production \
+  -t wishlist:production sites/wishlist
+```
+
+The expected daemon is `dynamicsites-next`, not the old `dynamicsites` or local
+Docker Desktop. This builds the application without starting services. The user
+has confirmed the initial new-host build succeeded, with image ID
+`sha256:3cd417db01e20922d13f1711f1b106f8c28c66263208cd08e9c3c17f11d452a7`
+and reported size 383,408,419 bytes. Its isolated smoke check passed: UID 1000,
+Ruby 4.0.6, OpenSSL 3.5.7, libpq 180001, libvips 8.18.2, threads and temporary
+directory/write operations. Rails boot against PostgreSQL and actual queue
+processing remain unverified on the new host. Subsequent deployment will
+start only Nginx, Wishlist web, worker and database, after database preparation.
+The existing proxy image copies old upstreams and site assets; adapt it for the
+new host before starting it without those legacy applications.
+
+The next database/Compose setup is in [deployment/README.md](deployment/README.md),
+with reviewable service definitions and environment-file examples. Those files
+have been validated with local Compose and dummy values, not deployed remotely.
+
+The user subsequently confirmed PostgreSQL 18.6 startup and SQL access on the new
+host. Production Rails now requires `WISHLIST_HOST` and `SMTP_PASSWORD` in addition
+to the existing environment settings; update app.env from the example and rebuild
+the application before database preparation. The Dockerfile supplies command-only
+fake host/SMTP values for asset compilation; no production credentials are used.
+
+The updated production image was rebuilt and tested against disposable local
+PostgreSQL 18.6 with fake secrets, no published ports and an internal network.
+`db:prepare` succeeded for primary/cache/queue/cable. All four connections worked,
+login/health/CSS returned HTTP 200, and an unexpected Host returned 403. A
+temporary probe job was processed by a separate worker and wrote to Solid Cache.
+SMTP configuration required STARTTLS and rendered the expected sender and HTTPS
+mail links; no email delivery was attempted. Remote Rails/worker operation and
+real Resend delivery are still pending, as is Nginx/TLS.
+
+Remote runtime update: the user renamed the shared web/worker image to
+`wishlist:production`, prepared `wishlist_production` plus cache/queue/cable,
+and confirmed schema versions (primary 20261022143156; others 1), web health,
+login HTTP 200 and a registered worker. Actual worker email remains unverified.
+The next step is the [Nginx/HTTPS configuration](deployment/nginx/README.md).
+
+Public deployment update: after adding the domain's A record, the user confirmed
+Let's Encrypt issued the certificate, Nginx enabled/reloaded the configuration,
+public curl/browser checks passed, and the initial account created a list/item.
+The invitation job performed successfully; by November 5 the user reports several
+family members have accounts and have logged in. Operational instructions are now
+in the [runbook](deployment/runbook.md), including optional exact-digest asset and
+queue checks. These commands were syntax-checked, not run against production for
+the documentation task. Manual data backup/recovery is documented separately;
+automated backups and a restore rehearsal are still outstanding.
+
 `Dockerfile.production` builds the image shared by the future web and Solid Queue
 worker services. It uses Ruby 4.0.6 on Alpine 3.24, matching the application's
 Ruby version and selecting an explicit Alpine release. The user confirmed that
 this base image creates threads on the old droplet with default seccomp enabled.
-Full application and PostgreSQL compatibility still need remote verification.
+Remote Rails/database checks have now passed; public HTTPS and live email remain.
 
 The image:
 
@@ -164,6 +229,17 @@ docker run --rm --network none ruby:4.0.6-alpine3.24 \
 ```
 
 Keep default seccomp enabled. PostgreSQL compatibility still needs testing.
+
+The subsequent remote application build reached Bundler but failed with
+`could not find a temporary directory`. In its build-stage image, the user
+confirmed that `File.writable?("/tmp")` returns false while `File.write` succeeds;
+with seccomp disabled, the permission check returns true. This confirms a second
+seccomp compatibility failure. The likely syscall is `faccessat2`, a known issue
+with modern Alpine on old Docker runtimes; the exact syscall was not traced.
+Changing directory permissions, choosing another temporary directory, or building
+locally does not resolve the runtime permission-check failure. The full remote
+build is blocked pending a runtime/host decision; do not adopt unconfined seccomp
+as a production fix.
 
 ### Application build after compatibility checks
 

@@ -235,7 +235,7 @@ docker compose logs -f selenium
 
 ## Production image
 
-Build with `docker build -f Dockerfile.production -t wishlist:production-check .`.
+Build with `docker build -f Dockerfile.production -t wishlist:production .`.
 The image runs Puma as a non-root user on port 3000 and also supports `./bin/jobs`
 for the separate worker. Database preparation is an explicit deployment step.
 See [production image checks](docs/production-image.md) for build behavior, local
@@ -243,6 +243,9 @@ verification, and historical compatibility checks for the older droplet. The
 new `dynamicsites-next` host has passed the image build/native checks and
 PostgreSQL startup. See [production setup](docs/deployment/README.md) for the
 Compose examples, required environment settings and ordered deployment commands.
+The [deployment/operations runbook](docs/deployment/runbook.md) covers Rancher
+Machine provisioning, routine updates, optional smoke checks, troubleshooting and
+rollback; [manual recovery](docs/deployment/recovery.md) covers existing data.
 
 ## Before the family beta
 

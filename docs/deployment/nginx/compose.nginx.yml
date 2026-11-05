@@ -1,0 +1,26 @@
+# Replace only the nginx service in dynamic_sites/docker-compose.yml.
+# Keep the existing top-level nginx_secrets volume declaration.
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./config/nginx/Dockerfile
+    restart: unless-stopped
+    environment:
+      CERTBOT_EMAIL: admin@mywishlist.top
+      STAGING: "0"
+      RENEWAL_INTERVAL: 12h
+    depends_on:
+      wishlistweb:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx_secrets:/etc/letsencrypt
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

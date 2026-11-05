@@ -288,3 +288,108 @@ ruby:4.0.6-alpine3.24 tag (50,076,672 bytes); the user should load it again so t
 remote classic builder finds the tag used by the Dockerfile. Local Alpine build,
 Rails/native-library/user checks, worker CLI and HTTP checks passed. Full remote
 application build/runtime and PostgreSQL compatibility remain open.
+
+Remote Alpine build update: correct build context is sites/wishlist from the
+dynamic_sites root, with -f sites/wishlist/Dockerfile.production. Dependencies
+installed, but Bundler failed with no usable temporary directory. In build-stage
+image 1ef86b9bd2f5, user confirmed UID 0, File.writable?("/tmp") false and actual
+write successful; disabling seccomp made File.writable? true. Likely faccessat2
+blocked by old seccomp (not syscall-traced). Alpine solves thread creation but
+does not solve complete runtime compatibility. Do not chmod directories or patch
+Ruby permission checks to hide this. Recommend revisiting a supported host/runtime
+before further deployment attempts.
+
+Current deployment target supersedes old-host troubleshooting: the user created
+a fresh NYC2 droplet through Rancher Machine as dynamicsites-next and verified
+Docker Engine 29.9.2. Deploy Wishlist there first; do not migrate other sites yet.
+The user may retire card_tracker/music_wiki, is upgrading portfolio elsewhere,
+and wants spritesheet fixed before considering its deployment. Keep Rancher
+Machine, remote builds, and the parent dynamic_sites Compose entry point. Use
+normal BuildKit builds on the modern daemon; archive conversion, disabled
+seccomp and legacy-builder settings are unnecessary for the planned setup.
+The parent proxy Dockerfile still uses jonasal/nginx-certbot:0.14 and copies all
+legacy configs/assets. Prepare a current, Wishlist-only proxy configuration
+before starting it without those old upstream services. Only read access to
+dynamic_sites is authorized. New-host application build and runtime checks remain
+pending; command from dynamic_sites root is docker build -f
+sites/wishlist/Dockerfile.production -t wishlist:production-check sites/wishlist.
+
+New-host image build and native smoke checks have now passed per user output:
+image sha256:3cd417db01e20922d13f1711f1b106f8c28c66263208cd08e9c3c17f11d452a7,
+reported size 383,408,419 bytes, UID 1000, Ruby 4.0.6, OpenSSL 3.5.7, libpq
+180001, libvips 8.18.2, Ruby threads and Dir.mktmpdir/write successful. Next stage
+is database and runtime setup. Reviewable Compose fragment and app/db env examples
+are in docs/deployment; local docker compose config --quiet passed with fake
+values. These have NOT been merged into dynamic_sites (read-only authorization)
+or deployed. Parent .gitignore currently ignores .env but not app.env/db.env:
+the guide explicitly adds those ignore entries before creating secrets. Examples
+use postgres:18.6-alpine3.24, /var/lib/postgresql volume, one shared app image,
+unpublished database/web ports, db readiness, storage volume and bounded logs.
+App env includes unused test ENV placeholders for current database.yml. Production
+host/SMTP/sender/admin-notification changes are still outstanding; do not start
+the worker or send invitations until those and public TLS are configured.
+
+Next production stage: user confirmed remote wishlistdb is healthy and SQL reports
+PostgreSQL 18.6. Application runtime configuration has now been implemented:
+production requires WISHLIST_HOST and SMTP_PASSWORD; SMTP_ADDRESS/PORT/USERNAME
+default to smtp.resend.com/2587/resend, with required STARTTLS, 5s connect/10s read
+timeouts and delivery failures raised in jobs. Host authorization allows only
+WISHLIST_HOST, with /up excluded for internal health checks. Mail URLs use HTTPS.
+ApplicationMailer now shares DEVISE_MAILER_SENDER with Devise. Registration alerts
+use optional REGISTRATION_NOTIFICATION_EMAIL (existing user's account; normalized
+case/whitespace), independent of sender, blank/unset disables alerts. Three new
+job regressions cover recipient independence and missing settings/accounts.
+All 19 job/mailer/registration-flow tests passed (122 assertions), focused
+RuboCop passed. Production image rebuild/assets succeeded with fake build-only
+host/SMTP values. Disposable local PostgreSQL 18.6 verified database preparation,
+four connections, /up/login/CSS 200, unexpected host 403, rendered mail headers/URL
+and actual processing of a temporary probe by a separate worker into Solid Cache.
+No external SMTP delivery was attempted; local tests used an internal network.
+Deployment guide/env examples now document real settings and ordered build,
+db:prepare, web/worker startup and checks. Parent repo remains read-only, user must
+update real app.env and submodule checkout and rebuild on dynamicsites-next.
+Nginx/TLS, remote Rails/worker checks and actual worker email remain outstanding.
+
+Remote runtime now confirmed by user: shared image renamed wishlist:production,
+db:prepare succeeded for wishlist_production and its cache/queue/cable databases;
+versions are 20261022143156 / 1 / 1 / 1. DB/web healthy, internal login returned
+200, /up green, worker process registered. No actual remote job or email delivery
+has yet been confirmed. Updated docs/deployment examples use wishlist:production.
+Next stage's Nginx examples live in docs/deployment/nginx: new Dockerfile.wishlist
+copies only wishlist.conf under user_conf.d, pinned image
+jonasal/nginx-certbot:6.2.0-nginx1.31.8-alpine, new-host Compose nginx replacement
+keeps nginx_secrets, bounds logs, depends on healthy web, uses normal HTTP-01
+issuance and renewals every 12h. Config uses dynamic Docker DNS resolution for
+wishlistweb, proxies Rails/assets, preserves host/HTTPS and overwrites forwarding
+headers at the directly exposed edge. Local isolated tests with USE_LOCAL_CA=1
+passed startup/certificate generation/nginx -t, HTTP redirect, trusted-test-CA
+HTTPS, path/query/forwarding headers and recovery after backend IP change without
+proxy restart. Test containers/network/certificate volume removed; no Let's
+Encrypt request or parent-repo mutation. Parent integration, root A/AAAA DNS,
+public ports and real certificate/HTTPS checks are the user's next steps.
+
+Current state as of November 5: public certificate issuance/reload succeeded after
+user added the missing A record. Curl/browser checks passed. User bootstrapped
+the initial confirmed account, created a list/item, confirmed an invitation job
+performed, and now reports multiple family members have accounts and logged in.
+User marked the email checks complete in TODO. Hourly RecurringJob logs were the
+normal minute-12 finished-job cleanup, not excessive scheduling.
+
+User requested deployment TODO section 4 as detailed operations documentation
+to fold into dynamic_sites/README.md. Explicitly no new live smoke test was
+requested; none was run. Added docs/deployment/runbook.md with local CLI/Rancher
+Machine targeting/provisioning, current filenames, secrets, first installation,
+routine scoped build/migrate/start, optional DB/HTTP/exact-digest CSS+JS/worker/
+email/manual-browser checks, targeted logs/health/queue retries, capacity,
+certificate/DNS/DB troubleshooting, restart/recreate, tagged image rollback and
+deployment records. docs/deployment/recovery.md covers manual consistent dumps
+of all four DBs plus storage/certs and restore on a fresh replacement host; this
+is documentation, not an implemented automated backup or rehearsed restore.
+Parent still read-only; user is editing its README. Its actual proxy paths are
+config/nginx/Dockerfile and mywishlist.conf (Compose now matches), using the
+six ECDHE/AEAD TLS 1.2 suites recommended in our review. Updated deployment
+examples to those names/settings and default DB name wishlist_production.
+Validated documentation shell/Ruby syntax only; no production mutations, smoke
+requests, jobs or emails. Section 4 is checked as documented/user-confirmed,
+with peak measurement, monitoring, automated backup and restore rehearsal left
+explicitly unfinished.
