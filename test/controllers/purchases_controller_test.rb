@@ -13,41 +13,46 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     confirm_and_sign_in @purchaser
   end
 
-  test "sorted Turbo purchase mutations preserve price order and sort context" do
-    post friend_list_purchases_path(@owner, @list), params: {
-      sort: "price_asc", purchase: { list_item_id: @item.id, quantity: 1, reveal_at: @reveal_at }
-    }, as: :turbo_stream
+  %w[price_asc price_desc].each do |sort|
+    test "#{sort} Turbo purchase mutations preserve price order and sort context" do
+      post friend_list_purchases_path(@owner, @list), params: {
+        sort: sort, purchase: { list_item_id: @item.id, quantity: 1, reveal_at: @reveal_at }
+      }, as: :turbo_stream
 
-    assert_response :created
-    purchase = @item.purchases.sole
-    assert_sorted_response
+      assert_response :created
 
-    patch purchase_path(purchase), params: { sort: "price_asc", purchase: { notes: "Updated" } }, as: :turbo_stream
+      purchase = @item.purchases.sole
 
-    assert_response :success
-    assert_sorted_response
+      assert_sorted_response(sort)
 
-    delete purchase_path(purchase), params: { sort: "price_asc" }, as: :turbo_stream
+      patch purchase_path(purchase), params: { sort: sort, purchase: { notes: "Updated" } }, as: :turbo_stream
 
-    assert_response :success
-    assert_sorted_response
-  end
+      assert_response :success
+      assert_sorted_response(sort)
 
-  test "sorted HTML purchase mutations redirect to the sorted list" do
-    post friend_list_purchases_path(@owner, @list), params: {
-      sort: "price_desc", purchase: { list_item_id: @item.id, quantity: 1, reveal_at: @reveal_at }
-    }
+      delete purchase_path(purchase), params: { sort: sort }, as: :turbo_stream
 
-    assert_redirected_to friend_list_path(@owner, @list, sort: "price_desc")
-    purchase = @item.purchases.sole
+      assert_response :success
+      assert_sorted_response(sort)
+    end
 
-    patch purchase_path(purchase), params: { sort: "price_desc", purchase: { notes: "Updated" } }
+    test "#{sort} HTML purchase mutations redirect to the sorted list" do
+      post friend_list_purchases_path(@owner, @list), params: {
+        sort: sort, purchase: { list_item_id: @item.id, quantity: 1, reveal_at: @reveal_at }
+      }
 
-    assert_redirected_to friend_list_path(@owner, @list, sort: "price_desc")
+      assert_redirected_to friend_list_path(@owner, @list, sort: sort)
 
-    delete purchase_path(purchase), params: { sort: "price_desc" }
+      purchase = @item.purchases.sole
 
-    assert_redirected_to friend_list_path(@owner, @list, sort: "price_desc")
+      patch purchase_path(purchase), params: { sort: sort, purchase: { notes: "Updated" } }
+
+      assert_redirected_to friend_list_path(@owner, @list, sort: sort)
+
+      delete purchase_path(purchase), params: { sort: sort }
+
+      assert_redirected_to friend_list_path(@owner, @list, sort: sort)
+    end
   end
 
   test "sorted validation errors preserve sort and draft values in the targeted form" do
@@ -71,6 +76,38 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
     patch purchase_path(purchase), params: { sort: "invalid", purchase: { notes: "Updated" } }
 
     assert_redirected_to friend_list_path(@owner, @list)
+  end
+
+  test "sorted purchase update errors replace only the submitted form and preserve the draft" do
+    purchase = existing_purchase(notes: "Saved notes")
+
+    patch purchase_path(purchase), params: {
+      sort: "price_desc", purchase: { reveal_at: "", notes: "Unsaved notes" }
+    }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_equal "Saved notes", purchase.reload.notes
+    assert_select "turbo-stream[action='replace']", count: 1
+
+    assert_select "turbo-stream[target='purchase_form_list_item_#{@item.id}']" do
+      assert_select "input[name='sort'][value='price_desc']"
+      assert_select "input[name='purchase[notes]'][value='Unsaved notes']"
+      assert_select "input[name='purchase[reveal_at]'][value]", count: 0
+    end
+  end
+
+  test "HTML purchase validation errors keep the sorted view" do
+    post friend_list_purchases_path(@owner, @list), params: {
+      sort: "price_desc", purchase: { list_item_id: @item.id, quantity: 1, reveal_at: "" }
+    }
+
+    assert_response :unprocessable_entity
+    assert_select "select[name='sort'] option[selected][value='price_desc']"
+    assert_select "#list-items section", count: 0
+
+    ids = css_select("#list-items [data-controller='list-item']").map { |item| item["data-id"].to_i }
+
+    assert_equal [ list_items(:football).id, @item.id, list_items(:lucky_cat).id ], ids
   end
 
   test "deleting a purchase can remove a fulfilled item from the sorted view" do
@@ -465,12 +502,14 @@ class PurchasesControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def assert_sorted_response
+  def assert_sorted_response(sort)
     assert_select "turbo-stream[target='list-items'] template #list-items" do
       ids = css_select("[data-controller='list-item']").map { |item| item["data-id"].to_i }
-      assert_equal [ list_items(:lucky_cat).id, @item.id, list_items(:football).id ], ids
+      expected = [ list_items(:lucky_cat).id, @item.id, list_items(:football).id ]
+      expected.reverse! if sort == "price_desc"
+      assert_equal expected, ids
       assert_select "section", count: 0
-      assert_select "input[name='sort'][value='price_asc']", count: 3
+      assert_select "input[name='sort'][value='#{sort}']", count: 3
     end
   end
 

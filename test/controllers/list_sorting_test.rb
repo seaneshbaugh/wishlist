@@ -146,12 +146,53 @@ class ListSortingTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "sorted URLs grant no access to unrelated pending or anonymous viewers" do
+    friendship = Friendship.between(@owner, @viewer)
+
+    friendship.destroy!
+
+    %w[price_asc price_desc].each do |sort|
+      get friend_list_path(@owner, @list), params: { sort: sort }
+
+      assert_response :not_found
+    end
+
+    Friendship.create!(requester: @owner, recipient: @viewer)
+
+    get friend_list_path(@owner, @list), params: { sort: "price_asc" }
+
+    assert_response :not_found
+
+    sign_out @viewer
+
+    get friend_list_path(@owner, @list), params: { sort: "price_desc" }
+
+    assert_response :not_found
+  end
+
+  test "sorting preserves the timestamp of the latest viewer-visible item" do
+    travel_to Time.zone.local(2026, 11, 6, 12) do
+      @list.update_columns(updated_at: 1.minute.ago)
+      @football.update_columns(visible: false, updated_at: 1.hour.ago)
+      @cat.update_columns(updated_at: 2.days.ago)
+      @brush.update_columns(updated_at: 3.days.ago)
+
+      %w[price_asc price_desc].each do |sort|
+        get friend_list_path(@owner, @list), params: { sort: sort }
+
+        assert_response :success
+        assert_select "#list-item-summary", text: /2 items.*Updated 2 days ago/m
+      end
+    end
+  end
+
   test "sorted rendering does not add queries per item" do
-    path = friend_list_path(@owner, @list, sort: "price_asc")
+    paths = %w[price_asc price_desc].map { |sort| friend_list_path(@owner, @list, sort: sort) }
+    before = paths.to_h do |path|
+      get path
 
-    get path
-
-    before = select_count(path)
+      [ path, select_count(path) ]
+    end
 
     4.times do |number|
       item = @list.list_items.create!(name: "Additional item #{number}", quantity: 2, price: number)
@@ -159,7 +200,9 @@ class ListSortingTest < ActionDispatch::IntegrationTest
       item.purchases.create!(user: @viewer, quantity: 1, reveal_at: 1.day.from_now)
     end
 
-    assert_equal before, select_count(path)
+    paths.each do |path|
+      assert_equal before.fetch(path), select_count(path)
+    end
   end
 
   private

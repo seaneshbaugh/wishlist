@@ -63,14 +63,16 @@
 
 ### 3. Tests and verification
 
-- [ ] Request tests: ascending/descending per-item prices across priorities; NULL-last in both directions; zero prices; equal-price priority/manual-order ties; default/unknown sort values; empty lists; and owner views retaining manual ordering. Verify sorting does not persist position/priority changes.
-- [ ] Access/visibility regression tests: hidden and fulfilled items stay excluded as appropriate, historical purchasers retain existing visibility, and unrelated/former friends and private lists remain inaccessible for sorted URLs.
-- [ ] Purchase request tests: retain sort on successful create/update/delete and HTML redirects, and preserve targeted validation errors. Verify each rendered list uses the requested order after visibility changes.
-- [ ] System tests: select both price directions, verify flat ordering and priority labels, return to Priority grouping, and verify the URL and dropdown at each step. Include a tie and an unpriced item without testing every possible combination in the browser.
-- [ ] System tests: exercise multiple sort changes followed by Back and Forward, reload a sorted URL, and directly open a sorted URL. Confirm Turbo navigation avoids a full-page refresh and restores consistent controls and content.
-- [ ] System tests: create/edit/delete a purchase while sorted and submit an invalid purchase form; confirm the selection/URL/order persist and successful mutations still update the item summary.
-- [ ] Retain existing list, item, purchase, and owner drag-and-drop coverage. Verify query counts stay bounded as the number of items grows; run relevant request/system suites and style checks.
-- [ ] Manually review the dropdown, labels, and purchase forms at narrow/mobile widths before deploying. Reconsider priority-label styling if it looks cluttered.
+- [x] Request tests: ascending/descending per-item prices across priorities; NULL-last in both directions; zero prices; equal-price priority/manual-order ties; default/unknown sort values; empty lists; and owner views retaining manual ordering. Verify sorting does not persist position/priority changes.
+- [x] Access/visibility regression tests: hidden and fulfilled items stay excluded as appropriate, historical purchasers retain existing visibility, and unrelated/former friends and private lists remain inaccessible for sorted URLs.
+- [x] Purchase request tests: retain sort on successful create/update/delete and HTML redirects, and preserve targeted validation errors. Verify each rendered list uses the requested order after visibility changes.
+- [x] System tests: select both price directions, verify flat ordering and priority labels, return to Priority grouping, and verify the URL and dropdown at each step. Include a tie and an unpriced item without testing every possible combination in the browser.
+- [x] System tests: exercise multiple sort changes followed by Back and Forward, reload a sorted URL, and directly open a sorted URL. Confirm Turbo navigation avoids a full-page refresh and restores consistent controls and content.
+- [x] System tests: create/edit/delete a purchase while sorted and submit an invalid purchase form; confirm the selection/URL/order persist and successful mutations still update the item summary.
+- [x] Retain existing list, item, purchase, and owner drag-and-drop coverage. Verify query counts stay bounded as the number of items grows; run relevant request/system suites and style checks.
+- [x] Review the dropdown, labels, and purchase forms at narrow widths before deploying. Inspected Firefox screenshots at a 500-pixel viewport (its minimum window width), with no horizontal overflow; the dropdown, labels, and fields fit. This is not a physical-phone check.
+
+Verification: 147 list/sorting/item/purchase request tests and 36 browser tests passed, including owner drag-and-drop workflows. Ruby style checks passed. Added coverage for both purchase sort directions, failed purchase edits, unrelated/pending/anonymous access, visible-item timestamps, price ties/unpriced items in the browser, and narrow-screen rendering. No application code changes were needed.
 
 ## Friendships: agreed behavior and implementation plan
 
