@@ -19,6 +19,7 @@
   <%= form_with model: purchase,
       url: purchase.persisted? ? friend_list_purchase_path(owner, list, purchase) : friend_list_purchases_path(owner, list),
       class: "space-y-4 p-4" do |form| %>
+    <%= hidden_field_tag :sort, @sort, id: nil if @sort.present? %>
     <%= form.hidden_field :list_item_id %>
     <% if purchase.errors.any? %>
       <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

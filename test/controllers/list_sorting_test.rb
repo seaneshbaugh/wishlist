@@ -90,6 +90,7 @@ class ListSortingTest < ActionDispatch::IntegrationTest
       assert_equal [ @football.id, @cat.id, @brush.id ], rendered_item_ids
       assert_select "#list-items section", count: 3
       assert_select "#list-items [data-reorder-handle]", count: 3
+      assert_select "select[name='sort']", count: 0
     end
   end
 
@@ -114,6 +115,20 @@ class ListSortingTest < ActionDispatch::IntegrationTest
     assert_empty rendered_item_ids
     assert_select "#list-items section", count: 0
     assert_select "#list-item-summary", text: /0 items/
+  end
+
+  test "sort controls and list render together with the selection from the URL" do
+    get friend_list_path(@owner, @list), params: { sort: "price_desc" }
+
+    assert_response :success
+
+    assert_select "#list-browser" do
+      assert_select "form[method='get'][data-turbo-action='advance']"
+      assert_select "select[name='sort'] option[selected][value='price_desc']"
+      assert_select "#list-items"
+    end
+
+    assert_select "form input[name='sort'][value='price_desc']", count: 3
   end
 
   test "sort parameters grant no access to private lists or former friends" do

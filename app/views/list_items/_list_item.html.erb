@@ -112,7 +112,7 @@
           </button>
         <% end %>
         <% if purchase&.deletable_by?(current_user) %>
-          <%= button_to friend_list_purchase_path(@list.user, @list, purchase),
+            <%= button_to friend_list_purchase_path(@list.user, @list, purchase, sort: @sort),
               method: :delete,
               form: {
                 data: {

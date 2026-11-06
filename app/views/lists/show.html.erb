@@ -56,7 +56,23 @@
     <% if @list.user == current_user %>
       <%= render "list_items/form", list: @list, list_item: @list_item, form_id: "new-list-item-form-top" %>
     <% end %>
-    <%= render "list_items/list_items" %>
+    <% if @list.user == current_user %>
+      <%= render "list_items/list_items" %>
+    <% else %>
+      <div id="list-browser">
+        <%= form_with url: friend_list_path(owner, @list), method: :get,
+            data: { controller: "list-sort", list_sort_order_value: @sort.to_s, turbo_action: "advance" },
+            class: "mt-8 flex flex-wrap items-center gap-3" do |form| %>
+          <%= form.label :sort, "Sort by", class: "text-sm font-medium text-slate-700" %>
+          <%= form.select :sort,
+              [["Priority", ""], ["Price: low to high", "price_asc"], ["Price: high to low", "price_desc"]],
+              { selected: @sort },
+              data: { list_sort_target: "select", action: "change->list-sort#submit" },
+              class: "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" %>
+        <% end %>
+        <%= render "list_items/list_items" %>
+      </div>
+    <% end %>
     <% if @list.user == current_user %>
       <div class="mt-8">
         <%= render "list_items/form", list: @list, list_item: @list_item, form_id: "new-list-item-form-bottom" %>

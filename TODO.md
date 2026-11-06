@@ -55,11 +55,11 @@
 
 ### 2. Dropdown, Turbo, and browser history
 
-- [ ] Add the labeled dropdown for non-owners with the current selection derived from the URL. Use a GET form and normal Turbo navigation; keep Stimulus limited to submitting the selection if needed.
-- [ ] Choose a Turbo Frame or equivalent Turbo navigation boundary that refreshes the controls and list together while promoting sort navigation to browser history (`advance`). Verify actual Back/Forward restoration rather than assuming partial replacement updates history.
-- [ ] Ensure direct/full-page requests and frame requests render correctly, including an empty list. Priority navigation should produce the ordinary list URL without stale sort parameters.
-- [ ] Carry the allowlisted sort context through purchase forms and success/error responses, including HTML redirect fallbacks. Subsequent mutations must preserve sorting, flat/grouped presentation, dropdown selection, priority labels, and the current URL without adding spurious sort history entries.
-- [ ] Keep targeted purchase validation replacement and submitted values intact. A successful purchase that removes an item from the viewer-visible collection must leave the remaining items correctly sorted.
+- [x] Add the labeled dropdown for non-owners with the current selection derived from the URL. Use a GET form and normal Turbo navigation; keep Stimulus limited to submitting the selection if needed.
+- [x] Use normal Turbo Drive GET navigation to update the controls and list together without a browser reload, adding sort changes to browser history (`advance`). Browser tests verify Back/Forward restoration; a small Stimulus connect hook restores the server-rendered selection when Turbo restores a cached form.
+- [x] Ensure direct requests and Turbo navigation render correctly, including an empty list. Priority navigation should produce the ordinary list URL without stale sort parameters.
+- [x] Carry the allowlisted sort context through purchase forms and success/error responses, including HTML redirect fallbacks. Subsequent mutations must preserve sorting, flat/grouped presentation, dropdown selection, priority labels, and the current URL without adding spurious sort history entries.
+- [x] Keep targeted purchase validation replacement and submitted values intact. A successful purchase that removes an item from the viewer-visible collection must leave the remaining items correctly sorted.
 
 ### 3. Tests and verification
 

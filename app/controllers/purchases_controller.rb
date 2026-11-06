@@ -1,5 +1,6 @@
 class PurchasesController < ApplicationController
   before_action :authenticate_user!
+  before_action :load_sort
 
   def create
     @list_item = find_list_item
@@ -31,7 +32,7 @@ class PurchasesController < ApplicationController
           if @list.user == current_user
             redirect_to list_url(@list), status: :see_other
           else
-            redirect_to friend_list_url(@list.user, @list), status: :see_other
+            redirect_to friend_list_url(@list.user, @list, sort: @sort), status: :see_other
           end
         end
       end
@@ -82,7 +83,7 @@ class PurchasesController < ApplicationController
           if @list.user == current_user
             redirect_to list_url(@list), status: :see_other
           else
-            redirect_to friend_list_url(@list.user, @list), status: :see_other
+            redirect_to friend_list_url(@list.user, @list, sort: @sort), status: :see_other
           end
         end
       end
@@ -132,7 +133,7 @@ class PurchasesController < ApplicationController
           if @list.user == current_user
             redirect_to list_url(@list), status: :see_other
           else
-            redirect_to friend_list_url(@list.user, @list), status: :see_other
+            redirect_to friend_list_url(@list.user, @list, sort: @sort), status: :see_other
           end
         end
       end
@@ -195,8 +196,21 @@ class PurchasesController < ApplicationController
     find_list.purchases.find(params[:id])
   end
 
+  def load_sort
+    @sort = params[:sort] if owner != current_user && %w[price_asc price_desc].include?(params[:sort])
+  end
+
   def load_list_items
-    @list_items = @list.list_items.visible_to(current_user).ordered.includes(:purchases)
+    @list_items = @list.list_items.visible_to(current_user).includes(:purchases)
+
+    @list_items = case @sort
+    when "price_asc"
+      @list_items.price_ascending
+    when "price_desc"
+      @list_items.price_descending
+    else
+      @list_items.ordered
+    end
 
     @list_items_by_priority = @list_items.group_by(&:priority)
   end
