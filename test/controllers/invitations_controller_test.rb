@@ -379,7 +379,7 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
 
     get invitations_path
 
-    assert_select "nav a[href='#{invitations_path}']", count: 1
+    assert_select "nav:not(#mobile-menu) a[href='#{invitations_path}']", count: 1
     assert_select "#mobile-menu a[href='#{invitations_path}']", count: 1
     assert_select "#invitation_#{invitation.id}", text: /Accepted/
     assert_select "#invitation_#{invitation.id} form", count: 0
