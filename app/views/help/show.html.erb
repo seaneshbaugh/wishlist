@@ -1,0 +1,120 @@
+<% content_for :title, "Using Wishlist · Help" %>
+
+<div class="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-16">
+  <header class="max-w-3xl lg:col-start-2">
+    <p class="text-sm font-semibold text-blue-600">Getting started</p>
+    <h1 class="mt-3 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Using Wishlist</h1>
+    <p class="mt-6 text-lg leading-8 text-slate-600">
+      Wishlist gives family and friends a shared place to keep track of gift ideas.
+      You can create lists for different occasions, share them with people you know, and record gifts you have purchased for someone else.
+      Access is based on friendship, so sharing a list does not make it available to everyone using the application.
+      Purchases can remain hidden from the list owner until a date you choose, allowing everyone else to coordinate without spoiling the surprise.
+    </p>
+  </header>
+
+  <aside class="lg:sticky lg:top-24 lg:self-start">
+    <nav aria-label="Help sections" class="rounded-xl border border-slate-200 bg-white/70 p-5 lg:rounded-none lg:border-0 lg:border-l lg:bg-transparent lg:py-0 lg:pl-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">On this page</p>
+      <ul class="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-1">
+        <li><a href="#invitations" class="text-slate-600 transition hover:text-blue-600">Invitations</a></li>
+        <li><a href="#friend-requests" class="text-slate-600 transition hover:text-blue-600">Friend requests</a></li>
+        <li><a href="#managing-lists" class="text-slate-600 transition hover:text-blue-600">Managing lists</a></li>
+        <li><a href="#purchases" class="text-slate-600 transition hover:text-blue-600">Marking items as purchased</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <article class="min-w-0 max-w-3xl text-base leading-7 text-slate-600">
+
+    <section id="invitations" aria-labelledby="invitations-heading" class="scroll-mt-24 border-t border-slate-200 pt-10">
+      <p class="text-sm font-semibold text-blue-600">01 · Bring someone to Wishlist</p>
+      <h2 id="invitations-heading" class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Invitations</h2>
+      <p class="mt-4">An invitation is the starting point for someone who does not yet have an account. It also works for someone who already uses Wishlist: they can accept it to become your friend without creating another account. Wishlist is <strong class="font-semibold text-slate-900">invite only</strong>. In order to make an account you must be invited by an existing user.</p>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Send an invitation</h3>
+      <ol class="mt-4 list-decimal space-y-3 pl-6 marker:font-medium marker:text-slate-400">
+        <li>Open <strong class="font-semibold text-slate-900">Invitations</strong> from the navigation menu.</li>
+        <li>Enter the person's email address and select <strong class="font-semibold text-slate-900">Send invitation</strong>.</li>
+        <li>They will receive an email with a link to accept. A new user creates an account there; an existing user signs in to the matching account.</li>
+      </ol>
+      <p class="mt-4">Accepting an invitation also establishes friendship with its sender. If someone receives invitations from several people, accepting one does not accept the others.</p>
+      <%= render "screenshot", filename: "invitations.png", width: 1120, height: 888, alt: "The Invitations page showing a pending invitation with resend and cancel controls.", caption: "Pending invitations can be resent or cancelled using the controls on the right." %>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Resend or cancel</h3>
+      <p class="mt-3">Click/tap the circular arrows to resend a pending invitation. Click/tap the cross to cancel it; the original link will then stop working. Invitations do not expire, and accepted invitations remain in the list as a record.</p>
+      <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm leading-6 text-blue-900">
+        <p class="font-semibold">Already accepted?</p>
+        <p class="mt-1">An accepted invitation cannot be cancelled. To stop sharing lists with that person, remove the friendship from the Friends page.</p>
+      </div>
+    </section>
+
+    <section id="friend-requests" aria-labelledby="friend-requests-heading" class="mt-14 scroll-mt-24 border-t border-slate-200 pt-10">
+      <p class="text-sm font-semibold text-blue-600">02 · Connect with an existing user</p>
+      <h2 id="friend-requests-heading" class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Friend requests</h2>
+      <p class="mt-4">If someone already has an account, you can send a friend request instead of an invitation. Ask them for the email address they use for Wishlist; there is no directory of everyone using the application.</p>
+      <ol class="mt-4 list-decimal space-y-3 pl-6 marker:font-medium marker:text-slate-400">
+        <li>Open <strong class="font-semibold text-slate-900">Friends</strong>, enter their address under <strong class="font-semibold text-slate-900">Friend's email address</strong>, and select <strong class="font-semibold text-slate-900">Send friend request</strong>.</li>
+        <li>If the address belongs to an eligible account, the recipient receives an email and can find the request under <strong class="font-semibold text-slate-900">Incoming friend requests</strong>.</li>
+        <li>The recipient selects the check mark to accept or the cross to decline. Sharing begins only after acceptance.</li>
+      </ol>
+      <p class="mt-4">For privacy, the response to sending a request does not confirm whether an otherwise unknown address has an account. If a request does not arrive, check the address with the person directly.</p>
+      <%= render "screenshot", filename: "friend-requests.png", width: 1024, height: 131, alt: "An incoming friend request from alex_example, with check-mark and cross buttons to accept or decline.", caption: "The recipient decides whether to accept a friend request. Sending requests to each other does not accept them automatically." %>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Browse or remove a friend</h3>
+      <p class="mt-3">Select a friend's username to browse the lists they share with you. The list count includes only their friends-visible lists; their private lists remain private.</p>
+      <p class="mt-4">The trash icon removes the friendship after confirmation. Both people immediately lose access to each other's lists and purchases on subsequent visits, including purchases they previously recorded. Existing purchase records are kept; removing a friendship does not cancel a gift.</p>
+    </section>
+
+    <section id="managing-lists" aria-labelledby="managing-lists-heading" class="mt-14 scroll-mt-24 border-t border-slate-200 pt-10">
+      <p class="text-sm font-semibold text-blue-600">03 · Keep your gift ideas together</p>
+      <h2 id="managing-lists-heading" class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Managing lists</h2>
+      <p class="mt-4">Use a separate list for each occasion or keep everything in one place. Lists belong to your account, and you choose which ones to share.</p>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Create a list and choose its visibility</h3>
+      <ol class="mt-4 list-decimal space-y-3 pl-6 marker:font-medium marker:text-slate-400">
+        <li>Open <strong class="font-semibold text-slate-900">My Lists</strong> and select <strong class="font-semibold text-slate-900">New List</strong>.</li>
+        <li>Enter a name and, if useful, a description.</li>
+        <li>Choose <strong class="font-semibold text-slate-900">Friends</strong> to share it with accepted friends, or <strong class="font-semibold text-slate-900">Private</strong> to keep it to yourself. Select <strong class="font-semibold text-slate-900">Create List</strong>.</li>
+      </ol>
+      <%= render "screenshot", filename: "create-list.png", width: 1072, height: 965, alt: "The Create List form with a name, description, and Friends or Private visibility choices.", caption: "Friends means your accepted friends, rather than everyone who has an account." %>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Add and arrange items</h3>
+      <p class="mt-3">Open the list and use either item form, above or below the items. Enter a name, choose a priority and quantity, and add a price, product link, or notes if they will help someone choose the right gift. The price is for one item, rather than the total requested quantity.</p>
+      <p class="mt-4">Items are grouped by priority. Use the drag handles to arrange them within a group or move them to another priority. You can also drag lists into your preferred order on My Lists.</p>
+      <%= render "screenshot", filename: "list-items.png", width: 1024, height: 260, alt: "A wishlist containing a reading lamp and a notebook, grouped by priority, with drag handles, product links, and edit and delete icons.", caption: "The pencil edits an item, the trash icon deletes it, and the drag handle changes its order. The small clipboard icon copies its full product link." %>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Edit, hide, or delete</h3>
+      <p class="mt-3">Use <strong class="font-semibold text-slate-900">Edit list</strong> to change the name, description, or sharing choice. Use an item's pencil icon to change its details. Choose <strong class="font-semibold text-slate-900">Hidden</strong> to hide an item from friends while keeping it on your own list.</p>
+      <p class="mt-4">Deleting a list also deletes its items and their purchase records. Deleting an item removes its purchase records too, so use hiding instead if you only want to stop showing an item for now.</p>
+    </section>
+
+    <section id="purchases" aria-labelledby="purchases-heading" class="mt-14 scroll-mt-24 border-t border-slate-200 pt-10">
+      <p class="text-sm font-semibold text-blue-600">04 · Coordinate gifts without spoiling the surprise</p>
+      <h2 id="purchases-heading" class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Marking items as purchased</h2>
+      <p class="mt-4">When buying a gift, open the recipient's list from Friends. You can record purchases on a friend's shared list, but not on your own list.</p>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Find a gift and record the purchase</h3>
+      <ol class="mt-4 list-decimal space-y-3 pl-6 marker:font-medium marker:text-slate-400">
+        <li>Use <strong class="font-semibold text-slate-900">Sort by</strong> to view items by priority or by price, from low to high or high to low. Items without a price appear last in either price order.</li>
+        <li>Follow the product link if one is provided. Once you have bought the gift, select the gift-box icon beside the item.</li>
+        <li>Enter the quantity purchased and a <strong class="font-semibold text-slate-900">Reveal Date &amp; Time</strong>. You can also record the price paid, where you bought it, and any notes.</li>
+        <li>Select <strong class="font-semibold text-slate-900">Mark as Purchased</strong> to save it.</li>
+      </ol>
+      <%= render "screenshot", filename: "purchase.png", width: 1022, height: 417, alt: "A purchase form showing quantity, purchase price, store, reveal date and time, attribution choices, and notes.", caption: "Choose a reveal date after the gift will have been given, so the purchase stays hidden from the list owner until then." %>
+
+      <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm leading-6 text-blue-900">
+        <p class="font-semibold">The reveal date matters.</p>
+        <p class="mt-1">Before that date, the list owner does not see the purchase. Once it arrives, the purchase is revealed and you can no longer edit or delete it yourself. Check the date and time before saving.</p>
+      </div>
+
+      <h3 class="mt-8 text-lg font-semibold text-slate-900">Change or remove a purchase</h3>
+      <p class="mt-3">Before the reveal date, use the gift-box icon again to edit your purchase and select <strong class="font-semibold text-slate-900">Save Purchase</strong>. Use its delete control if you need to remove the record, for example after returning the gift.</p>
+      <p class="mt-4">You can have one unrevealed purchase for an item at a time. After it is revealed, you may record another purchase if the requested quantity still allows it. Previous purchases continue to count toward that quantity.</p>
+      <p class="mt-4">Fully purchased items are hidden from friends who have not purchased them. Previous purchasers can still see them while the item remains visible and the list remains shared. If your friendship is removed or the list becomes private, access ends even if you previously recorded a purchase.</p>
+      <p class="mt-4">Sorting changes only your view of the list. It does not rearrange the owner's items, and it stays in place while you create, edit, or remove a purchase. The browser's Back and Forward buttons also return to your earlier sorting choices.</p>
+    </section>
+    <footer class="mt-14 border-t border-slate-200 pt-6 text-sm text-slate-500">
+      <a href="#" class="ml-1 font-medium text-blue-600 hover:text-blue-700">Back to top</a>
+    </footer>
+  </article>
+</div>

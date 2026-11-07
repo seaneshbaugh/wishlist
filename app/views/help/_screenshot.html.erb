@@ -1,0 +1,6 @@
+<figure class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <%= link_to image_path("help/#{filename}"), target: "_blank", rel: "noopener", aria: { label: "Open full-size screenshot: #{alt}" } do %>
+    <%= image_tag "help/#{filename}", alt: alt, width: width, height: height, loading: "lazy", decoding: "async", class: "block h-auto w-full" %>
+  <% end %>
+  <figcaption class="border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500"><%= caption %> Select the image to view it at full size.</figcaption>
+</figure>
