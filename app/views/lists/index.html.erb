@@ -21,12 +21,11 @@
         <%= pluralize(@visible_item_counts.values.sum, "item") %>.
       </p>
     </div>
-    <%= link_to new_list_path,
-      class: "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" do %>
-      <!--<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>-->
-      New List
+    <% if owner == current_user %>
+      <%= link_to new_list_path,
+        class: "inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" do %>
+        New List
+      <% end %>
     <% end %>
   </header>
   <div
