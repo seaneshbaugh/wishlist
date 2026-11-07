@@ -1,46 +1,64 @@
-<div class="mx-auto w-full max-w-5xl">
-  <h1 class="text-3xl font-semibold">Invitation from <%= @invitation.inviter.username %></h1>
-  <p class="mt-4">This invitation is for <%= @invitation.email %>.</p>
-  <p class="mt-4">Accepting establishes friendship with the sender, allowing you to see each other's friends-visible lists. Either of you can remove the friendship afterward.</p>
-  <% if @form_error.present? %>
-    <p role="alert" class="mt-4 text-red-700"><%= @form_error %></p>
-  <% end %>
-  <% @user.errors.full_messages.each do |message| %>
-    <p role="alert" class="mt-4 text-red-700"><%= message %></p>
-  <% end %>
-  <% if current_user && current_user.email != @invitation.email %>
-    <p class="mt-4">You are signed in as <%= current_user.username %>. Switch accounts to accept this invitation.</p>
-    <%= button_to "Switch accounts", switch_invitation_account_path(token: params[:token]), method: :post, class: "mt-4 rounded bg-blue-600 px-4 py-2 text-white" %>
-  <% elsif !current_user && @user.persisted? && @user.confirmed? %>
-    <p class="mt-4">You already have an account. Sign in, then accept this invitation to become friends.</p>
-    <%= link_to "Sign in", new_user_session_path, class: "mt-4 inline-block text-blue-600 underline" %>
-  <% else %>
-    <%= form_with model: @user, url: invitation_acceptance_path, method: :post, class: "mt-6 space-y-3" do |form| %>
-      <%= hidden_field_tag :token, params[:token] %>
-      <% unless current_user %>
-        <% if @user.new_record? %>
-          <%= form.label :username, class: "block font-medium" %>
-          <%= form.text_field :username, required: true, autocomplete: "username", class: "rounded border border-slate-300 px-3 py-2" %>
-        <% else %>
-          <p>Enter your existing password to confirm your email and accept this invitation.</p>
+<div class="mx-auto w-full max-w-2xl">
+  <header class="mb-10">
+    <h1 class="break-words text-3xl font-semibold tracking-tight text-slate-900">Invitation from <%= @invitation.inviter.username %></h1>
+    <p class="mt-3 break-words text-base leading-7 text-slate-500">This invitation is for <%= @invitation.email %>.</p>
+  </header>
+  <section class="rounded-xl border border-slate-200/70 bg-white/60 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+    <h2 class="text-lg font-semibold tracking-tight text-slate-900">Join your friend on Wishlist</h2>
+    <p class="mt-2 text-sm leading-6 text-slate-500">Accepting establishes friendship with the sender, allowing you to see each other's friends-visible lists. Either of you can remove the friendship afterward.</p>
+    <% if @form_error.present? %>
+      <p role="alert" class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><%= @form_error %></p>
+    <% end %>
+    <% @user.errors.full_messages.each do |message| %>
+      <p role="alert" class="mt-4 text-sm text-red-600"><%= message %></p>
+    <% end %>
+    <% if current_user && current_user.email != @invitation.email %>
+      <p class="mt-6 text-sm leading-6 text-slate-600">You are signed in as <%= current_user.username %>. Switch accounts to accept this invitation.</p>
+      <%= button_to "Switch accounts", switch_invitation_account_path(token: params[:token]), method: :post, class: "mt-6 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 sm:w-auto" %>
+    <% elsif !current_user && @user.persisted? && @user.confirmed? %>
+      <p class="mt-6 text-sm leading-6 text-slate-600">You already have an account. Sign in, then accept this invitation to become friends.</p>
+      <%= link_to "Sign in", new_user_session_path, class: "mt-6 inline-flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 sm:w-auto" %>
+    <% else %>
+      <%= form_with model: @user, url: invitation_acceptance_path, method: :post, class: "mt-8 space-y-6" do |form| %>
+        <%= hidden_field_tag :token, params[:token] %>
+        <% unless current_user %>
+          <% if @user.new_record? %>
+            <div>
+              <%= form.label :username, class: "block text-sm font-semibold text-slate-900" %>
+              <%= form.text_field :username, required: true, autocomplete: "username", class: "mt-3 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+          <% else %>
+            <p class="text-sm leading-6 text-slate-600">Enter your existing password to confirm your email and accept this invitation.</p>
+          <% end %>
+          <% password_autocomplete = if @user.new_record?
+            "new-password"
+          else
+            "current-password"
+          end %>
+          <div>
+            <%= form.label :password, class: "block text-sm font-semibold text-slate-900" %>
+            <%= form.password_field :password, required: true, autocomplete: password_autocomplete, class: "mt-3 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+          <% if @user.new_record? %>
+            <div>
+              <%= form.label :password_confirmation, class: "block text-sm font-semibold text-slate-900" %>
+              <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "mt-3 block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            </div>
+          <% end %>
         <% end %>
-        <%= form.label :password, class: "block font-medium" %>
-        <% password_autocomplete = if @user.new_record?
-          "new-password"
-        else
-          "current-password"
-        end %>
-        <%= form.password_field :password, required: true, autocomplete: password_autocomplete, class: "rounded border border-slate-300 px-3 py-2" %>
-        <% if @user.new_record? %>
-          <%= form.label :password_confirmation, class: "block font-medium" %>
-          <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "rounded border border-slate-300 px-3 py-2" %>
-        <% end %>
-      <% end %>
-      <% if @user.new_record? %>
-        <%= form.submit "Create account and accept invitation", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
-      <% else %>
-        <%= form.submit "Accept invitation", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
+        <div class="flex justify-end border-t border-slate-200 pt-6">
+          <%= form.button type: :submit, class: "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 sm:w-auto" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            <% if @user.new_record? %>
+              Create account and accept invitation
+            <% else %>
+              Accept invitation
+            <% end %>
+          <% end %>
+        </div>
       <% end %>
     <% end %>
-  <% end %>
+  </section>
 </div>

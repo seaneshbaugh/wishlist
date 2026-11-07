@@ -1,19 +1,40 @@
-<div id="invitations">
+<section id="invitations" class="mt-8 overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm">
+  <div class="border-b border-slate-200/70 bg-slate-50/70 px-6 py-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Your invitations</h2>
+  </div>
   <% if @invitations.empty? %>
-    <p class="mt-6">You haven't sent any invitations.</p>
+    <p class="px-6 py-10 text-center text-sm text-slate-500">You haven't sent any invitations.</p>
   <% end %>
-  <ul class="mt-6 space-y-4">
+  <ul class="divide-y divide-slate-200/70">
     <% @invitations.each do |invitation| %>
-      <li id="<%= dom_id(invitation) %>">
-        <span><%= invitation.email %></span>
-        <% if invitation.accepted_at.present? %>
-          <span>Accepted</span>
-        <% else %>
-          <span>Pending</span>
-          <%= button_to "Resend", resend_invitation_path(invitation), method: :post, aria: { label: "Resend invitation to #{invitation.email}" } %>
-          <%= button_to "Cancel invitation", invitation_path(invitation), method: :delete, aria: { label: "Cancel invitation to #{invitation.email}" }, form: { data: { turbo_confirm: "Cancel this invitation? Its link will stop working." } } %>
-        <% end %>
+      <li id="<%= dom_id(invitation) %>" class="flex flex-wrap items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-slate-50/60">
+        <div class="min-w-0 flex-1 basis-48">
+          <span class="block break-all font-medium text-slate-900"><%= invitation.email %></span>
+          <p class="mt-1 text-sm text-slate-500">Sent <%= time_ago_in_words(invitation.created_at) %> ago</p>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <% if invitation.accepted_at.present? %>
+            <span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">Accepted</span>
+          <% else %>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">Pending</span>
+            <%= button_to resend_invitation_path(invitation), method: :post,
+                aria: { label: "Resend invitation to #{invitation.email}" }, title: "Resend invitation",
+                class: "flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-blue-600" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992m0 0V4.356m0 4.992A9 9 0 0 0 3.75 6.75M7.977 14.652H2.985m0 0v4.992m0-4.992A9 9 0 0 0 20.25 17.25" />
+              </svg>
+            <% end %>
+            <%= button_to invitation_path(invitation), method: :delete,
+                aria: { label: "Cancel invitation to #{invitation.email}" }, title: "Cancel invitation",
+                form: { data: { turbo_confirm: "Cancel this invitation? Its link will stop working." } },
+                class: "flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-red-600" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
       </li>
     <% end %>
   </ul>
-</div>
+</section>

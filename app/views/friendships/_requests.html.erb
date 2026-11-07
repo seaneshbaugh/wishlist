@@ -1,17 +1,35 @@
-<div id="incoming-friend-requests">
+<section id="incoming-friend-requests" class="mt-8 overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm">
+  <div class="border-b border-slate-200/70 bg-slate-50/70 px-6 py-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Waiting for your response</h2>
+  </div>
   <% if @incoming_requests.empty? %>
-    <p class="mt-8">You have no incoming friend requests.</p>
+    <p class="px-6 py-10 text-center text-sm text-slate-500">You have no incoming friend requests.</p>
   <% else %>
-    <ul class="mt-8 divide-y divide-slate-200">
+    <ul class="divide-y divide-slate-200/70">
       <% @incoming_requests.each do |friendship| %>
-        <li class="flex items-center justify-between py-4" id="<%= dom_id(friendship) %>">
-          <span><%= friendship.requester.username %></span>
-          <div class="flex gap-4">
-            <%= button_to "Accept #{friendship.requester.username}", accept_friendship_path(friendship), method: :patch, class: "text-blue-600 underline" %>
-            <%= button_to "Decline #{friendship.requester.username}", friendship_path(friendship), method: :delete, class: "text-red-700 underline" %>
+        <li class="flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-slate-50/60" id="<%= dom_id(friendship) %>">
+          <div class="min-w-0">
+            <span class="block truncate font-medium text-slate-900"><%= friendship.requester.username %></span>
+            <p class="mt-1 text-sm text-slate-500">Sent <%= time_ago_in_words(friendship.created_at) %> ago</p>
+          </div>
+          <div class="flex shrink-0 gap-1">
+            <%= button_to accept_friendship_path(friendship), method: :patch,
+                aria: { label: "Accept #{friendship.requester.username}" }, title: "Accept request",
+                class: "flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-green-50 hover:text-green-700 focus-visible:outline-2 focus-visible:outline-green-600" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            <% end %>
+            <%= button_to friendship_path(friendship), method: :delete,
+                aria: { label: "Decline #{friendship.requester.username}" }, title: "Decline request",
+                class: "flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-red-600" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            <% end %>
           </div>
         </li>
       <% end %>
     </ul>
   <% end %>
-</div>
+</section>

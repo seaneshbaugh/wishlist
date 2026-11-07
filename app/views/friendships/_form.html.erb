@@ -1,10 +1,27 @@
-<div id="friend-request-form">
-  <%= form_with url: friendships_path, scope: :friendship, class: "mt-6 space-y-3" do |form| %>
+<section id="friend-request-form" class="rounded-xl border border-slate-200/70 bg-white/60 p-6 shadow-sm backdrop-blur-sm">
+  <h2 class="text-lg font-semibold tracking-tight text-slate-900">Send a friend request</h2>
+  <p class="mt-2 text-sm leading-6 text-slate-500">Know someone already using Wishlist? Enter their email below and send them a friend request, when they accept you will be able to see each other's lists.</p>
+  <%= form_with url: friendships_path, scope: :friendship, class: "mt-6 space-y-4" do |form| %>
     <% if error.present? %>
-      <p role="alert" class="text-red-700"><%= error %></p>
+      <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><%= error %></p>
     <% end %>
-    <%= form.label :email, "Friend's email address", class: "block font-medium" %>
-    <%= form.email_field :email, value: email, required: true, class: "rounded border border-slate-300 px-3 py-2" %>
-    <%= form.submit "Send friend request", class: "rounded bg-blue-600 px-4 py-2 text-white" %>
+    <div>
+      <%= form.label :email, "Friend's email address", class: "block text-sm font-semibold text-slate-900" %>
+      <%= form.email_field :email, value: email, required: true, autocomplete: "email",
+          aria: { invalid: error.present? },
+          class: class_names(
+            "mt-3 block w-full rounded-lg border bg-white px-4 py-3 shadow-sm transition",
+            "border-red-300 focus:border-red-500 focus:ring-red-500" => error.present?,
+            "border-slate-300 focus:border-blue-500 focus:ring-blue-500" => error.blank?
+          ) %>
+    </div>
+    <div class="flex justify-end">
+      <%= form.button type: :submit, class: "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 sm:w-auto" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+        </svg>
+        Send friend request
+      <% end %>
+    </div>
   <% end %>
-</div>
+</section>

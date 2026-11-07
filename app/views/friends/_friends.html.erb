@@ -1,19 +1,30 @@
-<div id="friends">
+<section id="friends" class="mt-8 overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 backdrop-blur-sm">
+  <div class="border-b border-slate-200/70 bg-slate-50/70 px-6 py-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Your friends</h2>
+  </div>
   <% if @friends.empty? %>
-    <p class="mt-8">You have no friends yet. Send a request using their email address.</p>
+    <div class="px-6 py-10 text-center">
+      <p class="font-medium text-slate-900">You have no friends yet.</p>
+      <p class="mt-2 text-sm text-slate-500">Send a request using their email address.</p>
+    </div>
   <% else %>
-    <ul class="mt-8 divide-y divide-slate-200">
+    <ul class="divide-y divide-slate-200/70">
       <% @friends.each do |friend| %>
-        <li class="flex items-center justify-between py-4">
-          <div>
-            <%= link_to friend.username, friend_lists_path(friend), class: "font-medium text-blue-600 underline" %>
-            <span><%= pluralize(@visible_list_counts.fetch(friend.id, 0), "list") %></span>
+        <li class="flex items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-slate-50/60">
+          <div class="min-w-0">
+            <%= link_to friend.username, friend_lists_path(friend), class: "block truncate font-medium text-slate-900 hover:text-blue-600" %>
+            <span class="mt-1 block text-sm text-slate-500"><%= pluralize(@visible_list_counts.fetch(friend.id, 0), "list") %></span>
           </div>
-          <%= button_to "Remove #{friend.username}", friendship_path(@friendships_by_friend_id.fetch(friend.id)),
+          <%= button_to friendship_path(@friendships_by_friend_id.fetch(friend.id)),
               method: :delete, form: { data: { turbo_confirm: "Remove #{friend.username}? Both of you will lose access to each other's lists and purchases." } },
-              class: "text-red-700 underline" %>
+              aria: { label: "Remove #{friend.username}" }, title: "Remove #{friend.username}",
+              class: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-red-600" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+          <% end %>
         </li>
       <% end %>
     </ul>
   <% end %>
-</div>
+</section>
