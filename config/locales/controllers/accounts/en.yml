@@ -1,0 +1,10 @@
+en:
+  accounts:
+    update:
+      success: "Your account has been updated."
+      success_email_changed: "Your account has been updated. Check your new email address for confirmation instructions."
+      error: "Unable to update your account. Please check the errors below."
+    destroy:
+      success: "Your account has been deleted."
+      error_confirmation: "The username does not match. Type your username exactly as shown."
+      error: "Unable to delete your account. Please try again."

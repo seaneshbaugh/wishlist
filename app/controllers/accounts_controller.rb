@@ -1,7 +1,5 @@
 class AccountsController < ApplicationController
-  def show
-    @account = current_user
-  end
+  before_action :authenticate_user!
 
   def edit
     @account = current_user
@@ -10,7 +8,7 @@ class AccountsController < ApplicationController
   def update
     @account = current_user
 
-    if @account.update(account_params)
+    if @account.update_account(account_params)
       bypass_sign_in(@account)
 
       flash[:success] = if @account.saved_change_to_attribute(:unconfirmed_email)
@@ -35,29 +33,27 @@ class AccountsController < ApplicationController
     @account = current_user
 
     if params[:confirmation] != @account.username
-      flash.now[:error] = t(".error_confirmation")
+      @confirmation_error = t(".error_confirmation")
 
-      return render "edit", status: :unprocessable_entity
+      return render "confirm_delete", status: :unprocessable_entity
     end
 
     if @account.destroy
+      sign_out(:user)
+
       flash[:success] = t(".success")
 
       redirect_to root_url, status: :see_other
     else
-      flash[:error] = t(".error")
+      flash.now[:error] = t(".error")
 
-      render "edit", status: :unprocessable_entity
+      render "confirm_delete", status: :unprocessable_entity
     end
   end
 
   private
 
   def account_params
-    params.require(:account).permit(:username, :email, :password, :password_confirmation).reject { |key, value| password_keys.include?(key) && value.blank? }
-  end
-
-  def password_keys
-    %w[password password_confirmation]
+    params.require(:account).permit(:username, :email, :password, :password_confirmation, :current_password)
   end
 end

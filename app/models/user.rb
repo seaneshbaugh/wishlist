@@ -30,6 +30,20 @@ class User < ApplicationRecord
       .or(User.where(id: incoming_friendships.accepted.select(:requester_id)))
   end
 
+  def update_account(attributes)
+    attributes = attributes.to_h.symbolize_keys
+
+    assign_attributes(attributes.except(:password, :password_confirmation, :current_password))
+
+    if email_changed? || attributes[:password].present? || attributes[:password_confirmation].present?
+      update_with_password(attributes)
+    else
+      attributes.delete(:current_password)
+
+      update_without_password(attributes)
+    end
+  end
+
   def friendly_id
     attribute_in_database(friendly_id_config.query_field)
   end

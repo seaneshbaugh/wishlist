@@ -37,7 +37,7 @@ Rails.application.routes.draw do
     post "/invitation/switch-account", to: "invitation_acceptances#switch_account", as: :switch_invitation_account
 
     authenticated do
-      resource :account, only: %i[show edit update destroy] do
+      resource :account, only: %i[edit update destroy] do
         get "confirm-delete" => "accounts#confirm_delete", as: :confirm_delete
       end
 
