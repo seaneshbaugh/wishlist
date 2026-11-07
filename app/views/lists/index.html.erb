@@ -18,7 +18,7 @@
       <p class="mt-4 text-sm text-slate-500">
         <%= pluralize(@lists.size, "list") %>
         containing
-        <%#= pluralize(@lists.sum(:items_count), "item") %>.
+        <%= pluralize(@visible_item_counts.values.sum, "item") %>.
       </p>
     </div>
     <%= link_to new_list_path,

@@ -266,6 +266,7 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-reorder-target='item'][data-id='#{@list.id}'] span", text: "3 items", count: 1
     assert_select "[data-reorder-target='item'][data-id='#{lists(:birthday_list).id}'] span", text: "0 items", count: 1
+    assert_select "header p", text: /2 lists\s+containing\s+3 items\./
   end
 
   test "index counts only viewer-visible items while retaining historical purchases" do
@@ -286,6 +287,14 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-reorder-target='item'][data-id='#{@list.id}'] span", text: "1 item", count: 1
     assert_select "[data-reorder-target='item'][data-id='#{lists(:birthday_list).id}'] span", text: "0 items", count: 1
     assert_select "[data-reorder-target='item'][data-id='#{private_list.id}']", count: 0
+    assert_select "header p", text: /2 lists\s+containing\s+1 item\./
+
+    list_items(:paint_brush).update!(visible: false)
+
+    get friend_lists_path(@owner)
+
+    assert_response :success
+    assert_select "header p", text: /2 lists\s+containing\s+0 items\./
   end
 
   test "index query count does not grow with the number of lists for owners or viewers" do
@@ -306,12 +315,14 @@ class ListsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal viewer_before, index_select_count(friend_lists_path(@owner))
+    assert_select "header p", text: /6 lists\s+containing\s+7 items\./
 
     switch_user @owner
 
     get lists_path
 
     assert_equal owner_before, index_select_count(lists_path)
+    assert_select "header p", text: /6 lists\s+containing\s+7 items\./
   end
 
   [ "text/html", "text/vnd.turbo-stream.html, text/html" ].each do |accept|
