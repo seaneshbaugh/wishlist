@@ -1,4 +1,6 @@
 <% flash.each do |type, message| %>
+  <%# Devise uses :timedout as an internal flag, not a display message. %>
+  <% next if type.to_sym == :timedout %>
   <% color =
     case type.to_sym
     when :success
